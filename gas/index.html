@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>יומן מסחר</title>
+  <style>
+    <?!= include('styles'); ?>
+  </style>
+  <script>
+    window.WEB_APP_URL = <?!= JSON.stringify(webAppUrl) ?>;
+  </script>
+</head>
+<body>
+  <header class="topbar">
+    <nav class="nav">
+      <a href="#dashboard">לוח מחוונים</a>
+      <a href="#new">עסקה חדשה</a>
+      <a href="#trades">רשימת עסקאות</a>
+      <a href="#settings">הגדרות</a>
+    </nav>
+  </header>
+
+  <main id="app">
+    <section id="view-dashboard" class="view hidden"></section>
+    <section id="view-new" class="view hidden"></section>
+    <section id="view-trades" class="view hidden"></section>
+    <section id="view-settings" class="view hidden"></section>
+  </main>
+
+  <?!= include('partials'); ?>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script>
+    <?!= include('app'); ?>
+  </script>
+</body>
+</html>

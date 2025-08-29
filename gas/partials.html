@@ -1,0 +1,102 @@
+<template id="tpl-dashboard">
+  <div class="cards">
+    <div class="card"><div class="label">יתרה נוכחית</div><div class="value" id="cur-balance">—</div></div>
+    <div class="card"><div class="label">יעד יומי</div><div class="value" id="daily-target">—</div></div>
+    <div class="card"><div class="label">הפסד יומי מקס׳</div><div class="value" id="daily-max-loss">—</div></div>
+  </div>
+  <div class="progress">
+    <div class="progress-label">התקדמות ליעד היום</div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <div class="progress-stats"><span id="today-pnl">0</span> / <span id="today-target">0</span></div>
+  </div>
+  <div class="stats-grid">
+    <div class="stat"><div class="label">היט רייט יומי</div><div class="value" id="hit-rate-day">—</div></div>
+    <div class="stat"><div class="label">היט רייט שבועי</div><div class="value" id="hit-rate-week">—</div></div>
+    <div class="stat"><div class="label">R:R ממוצע</div><div class="value" id="avg-rr">—</div></div>
+    <div class="stat"><div class="label">סה״כ רווח/הפסד יומי</div><div class="value" id="sum-day">—</div></div>
+    <div class="stat"><div class="label">סה״כ רווח/הפסד שבועי</div><div class="value" id="sum-week">—</div></div>
+  </div>
+</template>
+
+<template id="tpl-new">
+  <form id="new-trade-form" class="form">
+    <div class="form-grid">
+      <label>תאריך<input type="date" name="date" required></label>
+      <label>שעה<input type="time" name="time" required></label>
+      <label>סימבול<select name="symbol" id="symbol-select"></select></label>
+      <label>כיוון<select name="direction" required>
+        <option value="Long">Long</option>
+        <option value="Short">Short</option>
+      </select></label>
+      <label>Entry<input type="number" step="0.01" name="entry" id="entry"></label>
+      <label>Stop<input type="number" step="0.01" name="stop" id="stop"></label>
+      <label title="TP יחושב סימטרית ל-Entry/Stop אם מסומן">
+        Take Profit
+        <input type="number" step="0.01" name="take_profit" id="take_profit">
+      </label>
+      <label>כמות<input type="number" step="1" name="qty" id="qty"></label>
+      <label>עמלות<input type="number" step="0.01" name="commission" id="commission" value="0"></label>
+      <label>עמלות נוספות<input type="number" step="0.01" name="fees" id="fees" value="0"></label>
+      <label>הערות<textarea name="notes"></textarea></label>
+    </div>
+    <div class="side-info">
+      <div>יתרה: <span id="si-balance">—</span></div>
+      <div>TP%: <span id="si-tp">—</span> | SL%: <span id="si-sl">—</span></div>
+      <div>סיכון (₪): <span id="si-risk">—</span></div>
+      <div>יעד (₪): <span id="si-tp-amount">—</span> | סטופ (₪): <span id="si-sl-amount">—</span></div>
+      <div>R:R: <span id="si-rr">—</span></div>
+      <label class="inline"><input type="checkbox" id="auto-tp" checked> חשב TP סימטרי</label>
+    </div>
+    <div class="actions">
+      <button type="submit" data-status="Planned">שמור כ‑Planned</button>
+      <button type="submit" data-status="Executed" class="secondary">סמן כ‑Executed</button>
+    </div>
+  </form>
+</template>
+
+<template id="tpl-trades">
+  <div class="filters">
+    <input type="date" id="flt-start" />
+    <input type="date" id="flt-end" />
+    <select id="flt-symbol"></select>
+    <select id="flt-status" multiple>
+      <option>Planned</option>
+      <option>Executed</option>
+      <option>TP</option>
+      <option>SL</option>
+      <option>BE</option>
+      <option>Partial</option>
+      <option>Cancelled</option>
+    </select>
+    <button id="apply-filter">סנן</button>
+  </div>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ID</th><th>תאריך</th><th>שעה</th><th>סימבול</th><th>כיוון</th><th>Entry</th><th>Stop</th><th>TP</th><th>Qty</th><th>R:R</th><th>סטטוס</th><th>PNL</th><th>פעולות</th>
+      </tr>
+    </thead>
+    <tbody id="trades-body"></tbody>
+  </table>
+</template>
+
+<template id="tpl-settings">
+  <form id="settings-form" class="form">
+    <div class="form-grid">
+      <label>יתרת פתיחה<input type="number" step="0.01" name="starting_balance" required></label>
+      <label>יעד יומי<input type="number" step="0.01" name="daily_target" required></label>
+      <label>הפסד יומי מקס׳<input type="number" step="0.01" name="daily_max_loss" required></label>
+      <label>TP%<input type="number" step="0.01" name="tp_pct" required></label>
+      <label>SL%<input type="number" step="0.01" name="sl_pct" required></label>
+    </div>
+    <h3>אינסטרומנטים</h3>
+    <table class="table">
+      <thead><tr><th>סימבול</th><th>Tick Size</th><th>Tick Value</th><th>Contract Size</th><th></th></tr></thead>
+      <tbody id="inst-body"></tbody>
+    </table>
+    <button type="button" id="add-inst">הוסף אינסטרומנט</button>
+    <div class="actions">
+      <button type="submit">שמור</button>
+    </div>
+  </form>
+</template>

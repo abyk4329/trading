@@ -1,0 +1,334 @@
+/* Simple SPA client for TradingJournal (Apps Script include) */
+const state = {
+  baseUrl: '',
+  settings: null,
+  instruments: [],
+  balance_current: 0,
+  trades: [],
+};
+
+const routes = {
+  '#dashboard': renderDashboard,
+  '#new': renderNewTrade,
+  '#trades': renderTrades,
+  '#settings': renderSettings,
+};
+
+window.addEventListener('load', init);
+window.addEventListener('hashchange', navigate);
+
+async function init(){
+  state.baseUrl = window.WEB_APP_URL || '';
+  await refreshSettings();
+  navigate();
+}
+
+function navigate(){
+  const hash = window.location.hash || '#dashboard';
+  document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+  const fn = routes[hash] || renderDashboard;
+  fn();
+}
+
+async function refreshSettings(){
+  try {
+    const res = await apiGet('/api/settings');
+    if (res.ok) {
+      state.settings = res.settings;
+      state.instruments = res.instruments || [];
+      state.balance_current = res.balance_current || 0;
+    }
+  } catch (e) { toast('שגיאה בטעינת הגדרות'); }
+}
+
+function fmt(n){ if(n===undefined||n===null||n==='') return '—'; return Number(n).toLocaleString('he-IL', { maximumFractionDigits: 2 }); }
+function pct(n){ if(n===undefined||n===null||n==='') return '—'; return (Number(n)*100).toFixed(0)+'%'; }
+
+function renderDashboard(){
+  const container = document.getElementById('view-dashboard');
+  container.innerHTML = document.getElementById('tpl-dashboard').innerHTML;
+  container.classList.remove('hidden');
+
+  const s = state.settings || {};
+  document.getElementById('cur-balance').textContent = fmt(state.balance_current);
+  document.getElementById('daily-target').textContent = fmt(s.daily_target);
+  document.getElementById('daily-max-loss').textContent = fmt(s.daily_max_loss);
+
+  const today = new Date();
+  const sd = today.toISOString().slice(0,10);
+  apiGet('/api/trades?start_date='+sd+'&end_date='+sd).then(res => {
+    const trades = (res.trades||[]);
+    let sum = 0, wins=0, los=0; let rrSum=0, rrCnt=0;
+    trades.forEach(t => {
+      if (typeof t.pnl === 'number') sum += t.pnl;
+      if (typeof t.rr === 'number') { rrSum += t.rr; rrCnt++; }
+      if (t.status === 'TP' || (t.pnl>0)) wins++;
+      if (t.status === 'SL' || (t.pnl<0)) los++;
+    });
+    const target = Number(s.daily_target || 0);
+    const prog = target? Math.max(0, Math.min(100, (sum/target)*100)):0;
+    document.getElementById('today-pnl').textContent = fmt(sum);
+    document.getElementById('today-target').textContent = fmt(target);
+    document.getElementById('progress-fill').style.width = prog + '%';
+    document.getElementById('hit-rate-day').textContent = ((wins+los)>0? Math.round((wins/(wins+los))*100):0) + '%';
+    document.getElementById('avg-rr').textContent = rrCnt? fmt(rrSum/rrCnt) : '—';
+    document.getElementById('sum-day').textContent = fmt(sum);
+  });
+
+  const now = new Date();
+  const day = (now.getDay()+6)%7;
+  const monday = new Date(now); monday.setDate(now.getDate()-day);
+  const sunday = new Date(monday); sunday.setDate(monday.getDate()+6);
+  const sd2 = monday.toISOString().slice(0,10);
+  const ed2 = sunday.toISOString().slice(0,10);
+  apiGet('/api/trades?start_date='+sd2+'&end_date='+ed2).then(res => {
+    const trades = (res.trades||[]);
+    let sum = 0, wins=0, los=0;
+    trades.forEach(t => {
+      if (typeof t.pnl === 'number') sum += t.pnl;
+      if (t.status === 'TP' || (t.pnl>0)) wins++;
+      if (t.status === 'SL' || (t.pnl<0)) los++;
+    });
+    document.getElementById('sum-week').textContent = fmt(sum);
+    document.getElementById('hit-rate-week').textContent = ((wins+los)>0? Math.round((wins/(wins+los))*100):0) + '%';
+  });
+}
+
+function renderNewTrade(){
+  const container = document.getElementById('view-new');
+  container.innerHTML = document.getElementById('tpl-new').innerHTML;
+  container.classList.remove('hidden');
+
+  const form = container.querySelector('#new-trade-form');
+  const symbolSel = container.querySelector('#symbol-select');
+  const autoTP = container.querySelector('#auto-tp');
+
+  const s = state.settings || {};
+  container.querySelector('#si-balance').textContent = fmt(state.balance_current);
+  container.querySelector('#si-tp').textContent = pct(Number(s.tp_pct || 0.3));
+  container.querySelector('#si-sl').textContent = pct(Number(s.sl_pct || 0.15));
+
+  const now = new Date();
+  form.date.value = now.toISOString().slice(0,10);
+  form.time.value = now.toTimeString().slice(0,5);
+
+  const inst = state.instruments || [];
+  symbolSel.innerHTML = inst.map(i=>`<option value="${i.symbol}">${i.symbol}</option>`).join('');
+
+  const draft = JSON.parse(localStorage.getItem('new-trade-draft')||'{}');
+  Object.keys(draft).forEach(k => {
+    if (form[k] !== undefined) form[k].value = draft[k];
+  });
+
+  form.addEventListener('input', () => {
+    const data = Object.fromEntries(new FormData(form).entries());
+    localStorage.setItem('new-trade-draft', JSON.stringify(data));
+    updateSideInfo();
+  });
+
+  async function updateSideInfo(){
+    const entry = Number(form.entry.value);
+    const stop = Number(form.stop.value);
+    const direction = form.direction.value;
+    const symbol = form.symbol.value;
+    const instrument = state.instruments.find(x=>x.symbol===symbol);
+    const tp_pct = Number(s.tp_pct || 0.3);
+    const sl_pct = Number(s.sl_pct || 0.15);
+    const plan = computePlanClient({ balance: state.balance_current, tp_pct, sl_pct, entry, stop, direction, instrument });
+    container.querySelector('#si-risk').textContent = fmt(plan.risk_amount);
+    container.querySelector('#si-tp-amount').textContent = fmt(plan.planned_tp_amount);
+    container.querySelector('#si-sl-amount').textContent = fmt(plan.planned_sl_amount);
+    container.querySelector('#si-rr').textContent = fmt(plan.rr);
+    if (!form.qty.value && plan.qty) form.qty.value = plan.qty;
+    if (autoTP.checked && plan.take_profit && !form.take_profit.value) form.take_profit.value = plan.take_profit;
+  }
+  updateSideInfo();
+
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const status = ev.submitter && ev.submitter.dataset.status || 'Planned';
+    const data = Object.fromEntries(new FormData(form).entries());
+
+    if (!data.symbol) return toast('בחרי סימבול');
+    if (!data.direction) return toast('בחרי כיוון');
+    if (data.entry && data.stop && Number(data.entry) === Number(data.stop)) return toast('Entry ו-Stop לא יכולים להיות זהים');
+
+    const payload = {
+      date: data.date,
+      time: data.time,
+      symbol: data.symbol,
+      direction: data.direction,
+      entry: numOrNull(data.entry),
+      stop: numOrNull(data.stop),
+      take_profit: numOrNull(data.take_profit),
+      qty: numOrNull(data.qty),
+      status,
+      commission: numOrNull(data.commission) || 0,
+      fees: numOrNull(data.fees) || 0,
+      auto_take_profit: document.getElementById('auto-tp').checked
+    };
+
+    try {
+      const res = await apiPost('/api/trades', payload);
+      if (res.ok) {
+        toast('העסקה נשמרה');
+        localStorage.removeItem('new-trade-draft');
+        window.location.hash = '#trades';
+      } else throw new Error(res.error||'');
+    } catch (e) { toast('שמירה נכשלה'); }
+  });
+}
+
+function renderTrades(){
+  const container = document.getElementById('view-trades');
+  container.innerHTML = document.getElementById('tpl-trades').innerHTML;
+  container.classList.remove('hidden');
+
+  const tbody = container.querySelector('#trades-body');
+  const symSel = container.querySelector('#flt-symbol');
+  symSel.innerHTML = '<option value="">כל הסימבולים</option>' + (state.instruments||[]).map(i=>`<option>${i.symbol}</option>`).join('');
+  async function load(){
+    const sym = symSel.value || '';
+    const q = sym ? ('?symbol='+encodeURIComponent(sym)) : '';
+    const res = await apiGet('/api/trades'+q);
+    const trades = res.trades || [];
+    tbody.innerHTML = trades.map(t => trRow(t)).join('');
+    attachRowActions();
+  }
+  function trRow(t){
+    return `<tr>
+      <td>${t.id}</td><td>${t.date||''}</td><td>${t.time||''}</td><td>${t.symbol||''}</td><td>${t.direction||''}</td>
+      <td>${fmt(t.entry)}</td><td>${fmt(t.stop)}</td><td>${fmt(t.take_profit)}</td><td>${fmt(t.qty)}</td><td>${fmt(t.rr)}</td>
+      <td>${t.status||''}</td><td>${fmt(t.pnl)}</td>
+      <td>
+        <button class="mark" data-id="${t.id}" data-action="TP">TP</button>
+        <button class="mark" data-id="${t.id}" data-action="SL">SL</button>
+        <button class="mark" data-id="${t.id}" data-action="BE">BE</button>
+        <button class="mark-partial" data-id="${t.id}">Partial</button>
+        <button class="mark" data-id="${t.id}" data-action="Cancelled">Cancel</button>
+      </td>
+    </tr>`;
+  }
+  function attachRowActions(){
+    container.querySelectorAll('button.mark').forEach(btn => btn.addEventListener('click', async () => {
+      const id = btn.dataset.id; const action = btn.dataset.action;
+      const res = await apiPost(`/api/trades/${id}/mark`, { action });
+      if (res.ok) { toast('עודכן'); load(); } else toast('שגיאה');
+    }));
+    container.querySelectorAll('button.mark-partial').forEach(btn => btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      const percent = Number(prompt('אחוז למימוש חלקי (0-100):', '50'));
+      if (!isFinite(percent)) return;
+      const res = await apiPost(`/api/trades/${id}/mark`, { action: 'Partial', percent });
+      if (res.ok) { toast('עודכן'); load(); } else toast('שגיאה');
+    }));
+  }
+
+  container.querySelector('#apply-filter').addEventListener('click', async () => {
+    const sd = document.getElementById('flt-start').value;
+    const ed = document.getElementById('flt-end').value;
+    const sym = document.getElementById('flt-symbol').value;
+    const sel = Array.from(document.getElementById('flt-status').selectedOptions).map(o=>o.value).join(',');
+    const q = new URLSearchParams({ start_date: sd||'', end_date: ed||'', status: sel||'', symbol: sym||'' }).toString();
+    const res = await apiGet('/api/trades?'+q);
+    const trades = res.trades || [];
+    tbody.innerHTML = trades.map(t => trRow(t)).join('');
+    attachRowActions();
+  });
+
+  load();
+}
+
+function renderSettings(){
+  const container = document.getElementById('view-settings');
+  container.innerHTML = document.getElementById('tpl-settings').innerHTML;
+  container.classList.remove('hidden');
+  const form = container.querySelector('#settings-form');
+  const b = state.settings || {};
+  form.starting_balance.value = b.starting_balance || 10000;
+  form.daily_target.value = b.daily_target || 515;
+  form.daily_max_loss.value = b.daily_max_loss || 1500;
+  form.tp_pct.value = (b.tp_pct != null ? b.tp_pct : 0.30);
+  form.sl_pct.value = (b.sl_pct != null ? b.sl_pct : 0.15);
+
+  const tbody = container.querySelector('#inst-body');
+  function drawInstruments(){
+    tbody.innerHTML = (state.instruments||[]).map(i => instRow(i)).join('');
+  }
+  function instRow(i){
+    return `<tr>
+      <td><input value="${i.symbol||''}" class="inst-symbol"></td>
+      <td><input type="number" step="0.0001" value="${i.tick_size||''}" class="inst-tick-size"></td>
+      <td><input type="number" step="0.01" value="${i.tick_value||''}" class="inst-tick-value"></td>
+      <td><input type="number" step="1" value="${i.contract_size||''}" class="inst-contract-size"></td>
+      <td></td>
+    </tr>`;
+  }
+  drawInstruments();
+
+  container.querySelector('#add-inst').addEventListener('click', () => {
+    state.instruments.push({ symbol: '', tick_size: '', tick_value: '', contract_size: 1 });
+    drawInstruments();
+  });
+
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const instruments = Array.from(tbody.querySelectorAll('tr')).map(tr => ({
+      symbol: tr.querySelector('.inst-symbol').value.trim(),
+      tick_size: numOrNull(tr.querySelector('.inst-tick-size').value),
+      tick_value: numOrNull(tr.querySelector('.inst-tick-value').value),
+      contract_size: numOrNull(tr.querySelector('.inst-contract-size').value) || 1,
+    })).filter(i=>i.symbol);
+    const payload = {
+      starting_balance: numOrNull(form.starting_balance.value),
+      daily_target: numOrNull(form.daily_target.value),
+      daily_max_loss: numOrNull(form.daily_max_loss.value),
+      tp_pct: Number(form.tp_pct.value),
+      sl_pct: Number(form.sl_pct.value),
+      instruments
+    };
+    const res = await apiPost('/api/settings', payload);
+    if (res.ok) { toast('הוגדר בהצלחה'); refreshSettings(); }
+    else toast('שגיאה בשמירת הגדרות');
+  });
+}
+
+async function apiGet(path){
+  const url = `?path=${encodeURIComponent(path)}`;
+  const res = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' }});
+  return res.json();
+}
+async function apiPost(path, body){
+  const url = `?path=${encodeURIComponent(path)}`;
+  const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body||{}) });
+  return res.json();
+}
+
+function computePlanClient({ balance, tp_pct, sl_pct, entry, stop, direction, instrument }){
+  const risk_amount = round2(balance * sl_pct);
+  const planned_tp_amount = round2(balance * tp_pct);
+  const planned_sl_amount = round2(balance * sl_pct);
+  const rr = planned_sl_amount===0?0:round2(planned_tp_amount/planned_sl_amount);
+  let qty = '';
+  if (isFinite(entry) && isFinite(stop) && instrument && isFinite(instrument.tick_size) && isFinite(instrument.tick_value)){
+    const ticks = Math.abs(entry - stop)/instrument.tick_size;
+    const riskPer = ticks * instrument.tick_value;
+    if (riskPer>0) qty = Math.max(1, Math.floor(risk_amount/riskPer));
+  }
+  let take_profit = '';
+  if (isFinite(entry) && isFinite(stop)){
+    const d = Math.abs(entry - stop);
+    take_profit = direction==='Long' ? roundTo(entry + d, instrument && instrument.tick_size) : roundTo(entry - d, instrument && instrument.tick_size);
+  }
+  return { risk_amount, planned_tp_amount, planned_sl_amount, rr, qty, take_profit };
+}
+function round2(n){ return Math.round(Number(n||0)*100)/100; }
+function roundTo(n, step){ if(!step) return round2(n); const k=Math.round(n/step)*step; return round2(k); }
+function numOrNull(v){ const n=Number(v); return isNaN(n)? null : n; }
+
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+  setTimeout(()=>el.classList.add('hidden'), 2000);
+}

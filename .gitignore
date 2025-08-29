@@ -1,0 +1,28 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Node/JS (not used now, but safe)
+node_modules/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-store/
+
+# Build/output
+/dist/
+/build/
+/out/
+
+# VS Code
+.vscode/
+
+# Env/Secrets
+.env
+.env.*
+
+# Google Apps Script (clasp)
+.clasp.json
+.clasprc.json
