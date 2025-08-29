@@ -75,33 +75,44 @@
     document.addEventListener('DOMContentLoaded', () => {
       console.log('DOM loaded, setting up fallback navigation...');
 
-      // Add click handlers for navigation buttons
-      document.querySelectorAll('.nav-link').forEach(button => {
-        button.addEventListener('click', (e) => {
-          e.preventDefault();
-          const route = e.target.dataset.route;
-          console.log('Navigation clicked:', route);
+      // Only setup fallback if main app script hasn't loaded
+      setTimeout(() => {
+        if (typeof window.navigate === 'undefined') {
+          console.log('Main app not loaded, using fallback navigation');
 
-          // Update URL
-          window.location.hash = route;
+          // Add click handlers for navigation buttons
+          document.querySelectorAll('.nav-link').forEach(button => {
+            button.addEventListener('click', (e) => {
+              e.preventDefault();
+              const route = e.target.dataset.route;
+              console.log('Fallback navigation clicked:', route);
 
-          // Update active state
-          document.querySelectorAll('.nav-link').forEach(btn => btn.classList.remove('active'));
-          e.target.classList.add('active');
+              // Update URL
+              window.location.hash = route;
 
-          // Basic content switching
-          document.querySelectorAll('.view').forEach(view => view.classList.add('hidden'));
-          const viewId = 'view-' + route.substring(1);
-          const targetView = document.getElementById(viewId);
-          if (targetView) {
-            targetView.classList.remove('hidden');
-            // Load basic content
-            if (route === '#dashboard' && document.getElementById('tpl-dashboard')) {
-              targetView.innerHTML = document.getElementById('tpl-dashboard').innerHTML;
-            }
-          }
-        });
-      });
+              // Update active state
+              document.querySelectorAll('.nav-link').forEach(btn => btn.classList.remove('active'));
+              e.target.classList.add('active');
+
+              // Basic content switching
+              document.querySelectorAll('.view').forEach(view => view.classList.add('hidden'));
+              const viewId = 'view-' + route.substring(1);
+              const targetView = document.getElementById(viewId);
+              if (targetView) {
+                targetView.classList.remove('hidden');
+                // Load basic content from templates
+                const templateId = 'tpl-' + route.substring(1);
+                const template = document.getElementById(templateId);
+                if (template) {
+                  targetView.innerHTML = template.innerHTML;
+                }
+              }
+            });
+          });
+        } else {
+          console.log('Main app loaded, skipping fallback navigation');
+        }
+      }, 2000); // Wait 2 seconds for main app to load
 
       // Load dashboard by default
       setTimeout(() => {

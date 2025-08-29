@@ -69,23 +69,44 @@ window.addEventListener('hashchange', () => {
 
 // Enhanced navigation click handler
 document.addEventListener('click', (e) => {
+  console.log('Click detected on:', e.target);
   if (e.target.classList.contains('nav-link')) {
     e.preventDefault();
     const route = e.target.dataset.route;
     console.log('Navigation button clicked:', route);
-    window.location.hash = route;
+    if (route) {
+      window.location.hash = route;
+    } else {
+      console.error('No route found on clicked element');
+    }
   }
 });
 
 async function init(){
   try {
     console.log('Initializing app...');
+
+    // Check if templates are loaded
+    const templates = ['tpl-dashboard', 'tpl-new', 'tpl-trades', 'tpl-settings'];
+    const missingTemplates = templates.filter(id => !document.getElementById(id));
+    if (missingTemplates.length > 0) {
+      console.error('Missing templates:', missingTemplates);
+      toast('Error: Missing templates - ' + missingTemplates.join(', '));
+      return;
+    }
+    console.log('All templates found');
+
     state.baseUrl = window.WEB_APP_URL || '';
     console.log('Base URL:', state.baseUrl);
 
     await refreshSettings();
-    navigate();
 
+    // Ensure we have a hash before navigating
+    if (!window.location.hash) {
+      window.location.hash = '#dashboard';
+    }
+
+    navigate();
     console.log('App initialized successfully');
   } catch (error) {
     console.error('Init error:', error);
@@ -99,6 +120,12 @@ async function init(){
     };
     state.instruments = Object.values(PREDEFINED_INSTRUMENTS);
     state.balance_current = 10000;
+
+    // Ensure we have a hash before navigating
+    if (!window.location.hash) {
+      window.location.hash = '#dashboard';
+    }
+
     navigate();
     toast('Using fallback settings - check console for details');
   }
@@ -119,11 +146,15 @@ function navigate(){
     const activeLink = document.querySelector(`[data-route="${hash}"]`);
     if (activeLink) {
       activeLink.classList.add('active');
+      console.log('Active link found and activated');
+    } else {
+      console.log('Active link not found for route:', hash);
     }
 
     // Render the appropriate view
     const fn = routes[hash] || renderDashboard;
     if (typeof fn === 'function') {
+      console.log('Calling render function for:', hash);
       fn();
     } else {
       console.error('Route function not found for:', hash);
@@ -195,9 +226,22 @@ function fmt(n){ if(n===undefined||n===null||n==='') return '—'; return '$' + 
 function pct(n){ if(n===undefined||n===null||n==='') return '—'; return (Number(n)*100).toFixed(0)+'%'; }
 
 function renderDashboard(){
+  console.log('Rendering dashboard...');
   const container = document.getElementById('view-dashboard');
-  container.innerHTML = document.getElementById('tpl-dashboard').innerHTML;
+  if (!container) {
+    console.error('Dashboard container not found!');
+    return;
+  }
+
+  const template = document.getElementById('tpl-dashboard');
+  if (!template) {
+    console.error('Dashboard template not found!');
+    return;
+  }
+
+  container.innerHTML = template.innerHTML;
   container.classList.remove('hidden');
+  console.log('Dashboard rendered successfully');
 
   const s = state.settings || {};
   document.getElementById('cur-balance').textContent = fmt(state.balance_current);
