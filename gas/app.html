@@ -221,24 +221,6 @@ async function refreshSettings(){
     toast('Using default settings - API may not be working');
   }
 }
-      };
-      state.instruments = Object.values(PREDEFINED_INSTRUMENTS);
-      state.balance_current = 10000;
-    }
-  } catch (e) {
-    // Fallback to predefined instruments
-    state.settings = {
-      starting_balance: 10000,
-      daily_target: 100,
-      daily_max_loss: 50,
-      tp_pct: 0.02,
-      sl_pct: 0.01
-    };
-    state.instruments = Object.values(PREDEFINED_INSTRUMENTS);
-    state.balance_current = 10000;
-    toast('Using default settings - please configure in Settings');
-  }
-}
 
 function fmt(n){ if(n===undefined||n===null||n==='') return '—'; return '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 }); }
 function pct(n){ if(n===undefined||n===null||n==='') return '—'; return (Number(n)*100).toFixed(0)+'%'; }
