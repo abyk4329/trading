@@ -1,15 +1,15 @@
 {
-  "name": "יומן מסחר",
+  "name": "Trading Journal",
   "short_name": "Trading Journal",
-  "description": "יומן מסחר מתקדם עם ניהול עסקאות וניתוח ביצועים",
+  "description": "Advanced trading journal with transaction management and performance analysis",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#EAEAE7",
   "theme_color": "#9E7E67",
   "orientation": "portrait-primary",
   "categories": ["finance", "productivity"],
-  "lang": "he-IL",
-  "dir": "rtl",
+  "lang": "en-US",
+  "dir": "ltr",
   "icons": [
     {
       "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='64' fill='%239E7E67'/><text x='256' y='280' font-family='Arial, sans-serif' font-size='200' font-weight='bold' text-anchor='middle' fill='%23EAEAE7'>📊</text></svg>",

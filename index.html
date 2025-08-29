@@ -1,15 +1,15 @@
 <!doctype html>
-<html lang="he" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>יומן מסחר</title>
+  <title>Trading Journal</title>
 
   <!-- PWA Meta Tags -->
   <meta name="theme-color" content="#9E7E67" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="יומן מסחר" />
+  <meta name="apple-mobile-web-app-title" content="Trading Journal" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="msapplication-TileColor" content="#9E7E67" />
   <meta name="msapplication-config" content="/browserconfig.xml" />
@@ -40,12 +40,12 @@
 <body>
   <header class="topbar">
     <div class="header-content">
-      <h1 class="app-title">יומן מסחר</h1>
+      <h1 class="app-title">Trading Journal</h1>
       <nav class="nav">
-        <a href="#dashboard" class="nav-link">לוח מחוונים</a>
-        <a href="#new" class="nav-link">עסקה חדשה</a>
-        <a href="#trades" class="nav-link">רשימת עסקאות</a>
-        <a href="#settings" class="nav-link">הגדרות</a>
+        <a href="#dashboard" class="nav-link">Dashboard</a>
+        <a href="#new" class="nav-link">New Trade</a>
+        <a href="#trades" class="nav-link">Trade List</a>
+        <a href="#settings" class="nav-link">Settings</a>
       </nav>
     </div>
   </header>
@@ -59,65 +59,77 @@
 
   <template id="tpl-dashboard">
     <div class="cards">
-      <div class="card"><div class="label">יתרה נוכחית</div><div class="value" id="cur-balance">—</div></div>
-      <div class="card"><div class="label">יעד יומי</div><div class="value" id="daily-target">—</div></div>
-      <div class="card"><div class="label">הפסד יומי מקס׳</div><div class="value" id="daily-max-loss">—</div></div>
+      <div class="card"><div class="label">Current Balance</div><div class="value" id="cur-balance">—</div></div>
+      <div class="card"><div class="label">Daily Target</div><div class="value" id="daily-target">—</div></div>
+      <div class="card"><div class="label">Max Daily Loss</div><div class="value" id="daily-max-loss">—</div></div>
     </div>
     <div class="progress">
-      <div class="progress-label">התקדמות ליעד היום</div>
+      <div class="progress-label">Today's Target Progress</div>
       <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
       <div class="progress-stats"><span id="today-pnl">0</span> / <span id="today-target">0</span></div>
     </div>
     <div class="stats-grid">
-      <div class="stat"><div class="label">היט רייט יומי</div><div class="value" id="hit-rate-day">—</div></div>
-      <div class="stat"><div class="label">היט רייט שבועי</div><div class="value" id="hit-rate-week">—</div></div>
-      <div class="stat"><div class="label">R:R ממוצע</div><div class="value" id="avg-rr">—</div></div>
-      <div class="stat"><div class="label">סה״כ רווח/הפסד יומי</div><div class="value" id="sum-day">—</div></div>
-      <div class="stat"><div class="label">סה״כ רווח/הפסד שבועי</div><div class="value" id="sum-week">—</div></div>
+      <div class="stat"><div class="label">Daily Hit Rate</div><div class="value" id="hit-rate-day">—</div></div>
+      <div class="stat"><div class="label">Weekly Hit Rate</div><div class="value" id="hit-rate-week">—</div></div>
+      <div class="stat"><div class="label">Avg R:R</div><div class="value" id="avg-rr">—</div></div>
+      <div class="stat"><div class="label">Daily P&L</div><div class="value" id="sum-day">—</div></div>
+      <div class="stat"><div class="label">Weekly P&L</div><div class="value" id="sum-week">—</div></div>
     </div>
   </template>
 
   <template id="tpl-new">
     <form id="new-trade-form" class="form">
       <div class="form-grid">
-        <label>תאריך<input type="date" name="date" required></label>
-        <label>שעה<input type="time" name="time" required></label>
-        <label>סימבול<select name="symbol" id="symbol-select"></select></label>
-        <label>כיוון<select name="direction" required>
+        <label>Date<input type="date" name="date" required></label>
+        <label>Time<input type="time" name="time" required></label>
+        <label>Symbol<select name="symbol" id="symbol-select" required>
+          <option value="">Select Symbol</option>
+          <option value="GOLD">Gold (XAU/USD)</option>
+          <option value="MINI_NASDAQ">Mini Nasdaq (MNQ)</option>
+          <option value="MICRO_NASDAQ">Micro Nasdaq (NQ)</option>
+          <option value="NASDAQ_100">Nasdaq 100 (NDX)</option>
+        </select></label>
+        <label>Direction<select name="direction" required>
           <option value="Long">Long</option>
           <option value="Short">Short</option>
         </select></label>
-        <label>Entry<input type="number" step="0.01" name="entry" id="entry"></label>
-        <label>Stop<input type="number" step="0.01" name="stop" id="stop"></label>
-        <label title="TP יחושב סימטרית ל-Entry/Stop אם מסומן">
+        <label>Entry Price<input type="number" step="0.01" name="entry" id="entry" placeholder="0.00"></label>
+        <label>Stop Loss<input type="number" step="0.01" name="stop" id="stop" placeholder="0.00"></label>
+        <label title="TP will be calculated symmetrically to Entry/Stop if checked">
           Take Profit
-          <input type="number" step="0.01" name="take_profit" id="take_profit">
+          <input type="number" step="0.01" name="take_profit" id="take_profit" placeholder="0.00">
         </label>
-        <label>כמות<input type="number" step="1" name="qty" id="qty"></label>
-        <label>עמלות<input type="number" step="0.01" name="commission" id="commission" value="0"></label>
-        <label>עמלות נוספות<input type="number" step="0.01" name="fees" id="fees" value="0"></label>
-        <label>הערות<textarea name="notes"></textarea></label>
+        <label>Quantity<input type="number" step="1" name="qty" id="qty" placeholder="1"></label>
+        <label>Commission ($)<input type="number" step="0.01" name="commission" id="commission" value="0" placeholder="0.00"></label>
+        <label>Additional Fees ($)<input type="number" step="0.01" name="fees" id="fees" value="0" placeholder="0.00"></label>
+        <label>Notes<textarea name="notes" placeholder="Trade notes..."></textarea></label>
       </div>
       <div class="side-info">
-        <div>יתרה: <span id="si-balance">—</span></div>
+        <div>Balance: <span id="si-balance">—</span></div>
         <div>TP%: <span id="si-tp">—</span> | SL%: <span id="si-sl">—</span></div>
-        <div>סיכון (₪): <span id="si-risk">—</span></div>
-        <div>יעד (₪): <span id="si-tp-amount">—</span> | סטופ (₪): <span id="si-sl-amount">—</span></div>
+        <div>Risk ($): <span id="si-risk">—</span></div>
+        <div>Target ($): <span id="si-tp-amount">—</span> | Stop ($): <span id="si-sl-amount">—</span></div>
         <div>R:R: <span id="si-rr">—</span></div>
-        <label class="inline"><input type="checkbox" id="auto-tp" checked> חשב TP סימטרי</label>
+        <label class="inline"><input type="checkbox" id="auto-tp" checked> Auto-calculate TP</label>
       </div>
       <div class="actions">
-        <button type="submit" data-status="Planned">שמור כ‑Planned</button>
-        <button type="submit" data-status="Executed" class="secondary">סמן כ‑Executed</button>
+        <button type="submit" data-status="Planned">Save as Planned</button>
+        <button type="submit" data-status="Executed" class="secondary">Mark as Executed</button>
       </div>
     </form>
   </template>
 
   <template id="tpl-trades">
     <div class="filters">
-      <input type="date" id="flt-start" />
-      <input type="date" id="flt-end" />
-      <select id="flt-symbol"></select>
+      <input type="date" id="flt-start" placeholder="Start Date" />
+      <input type="date" id="flt-end" placeholder="End Date" />
+      <select id="flt-symbol">
+        <option value="">All Symbols</option>
+        <option value="GOLD">Gold (XAU/USD)</option>
+        <option value="MINI_NASDAQ">Mini Nasdaq (MNQ)</option>
+        <option value="MICRO_NASDAQ">Micro Nasdaq (NQ)</option>
+        <option value="NASDAQ_100">Nasdaq 100 (NDX)</option>
+      </select>
       <select id="flt-status" multiple>
         <option>Planned</option>
         <option>Executed</option>
@@ -127,12 +139,12 @@
         <option>Partial</option>
         <option>Cancelled</option>
       </select>
-      <button id="apply-filter">סנן</button>
+      <button id="apply-filter">Filter</button>
     </div>
     <table class="table">
       <thead>
         <tr>
-          <th>ID</th><th>תאריך</th><th>שעה</th><th>סימבול</th><th>כיוון</th><th>Entry</th><th>Stop</th><th>TP</th><th>Qty</th><th>R:R</th><th>סטטוס</th><th>PNL</th><th>פעולות</th>
+          <th>ID</th><th>Date</th><th>Time</th><th>Symbol</th><th>Direction</th><th>Entry</th><th>Stop</th><th>TP</th><th>Qty</th><th>R:R</th><th>Status</th><th>P&L ($)</th><th>Actions</th>
         </tr>
       </thead>
       <tbody id="trades-body"></tbody>
@@ -142,20 +154,20 @@
   <template id="tpl-settings">
     <form id="settings-form" class="form">
       <div class="form-grid">
-        <label>יתרת פתיחה<input type="number" step="0.01" name="starting_balance" required></label>
-        <label>יעד יומי<input type="number" step="0.01" name="daily_target" required></label>
-        <label>הפסד יומי מקס׳<input type="number" step="0.01" name="daily_max_loss" required></label>
-        <label>TP%<input type="number" step="0.01" name="tp_pct" required></label>
-        <label>SL%<input type="number" step="0.01" name="sl_pct" required></label>
+        <label>Starting Balance ($)<input type="number" step="0.01" name="starting_balance" required placeholder="10000.00"></label>
+        <label>Daily Target ($)<input type="number" step="0.01" name="daily_target" required placeholder="100.00"></label>
+        <label>Max Daily Loss ($)<input type="number" step="0.01" name="daily_max_loss" required placeholder="50.00"></label>
+        <label>TP %<input type="number" step="0.01" name="tp_pct" required placeholder="2.00"></label>
+        <label>SL %<input type="number" step="0.01" name="sl_pct" required placeholder="1.00"></label>
       </div>
-      <h3>אינסטרומנטים</h3>
+      <h3>Instruments</h3>
       <table class="table">
-        <thead><tr><th>סימבול</th><th>Tick Size</th><th>Tick Value</th><th>Contract Size</th><th></th></tr></thead>
+        <thead><tr><th>Symbol</th><th>Tick Size</th><th>Tick Value ($)</th><th>Contract Size</th><th></th></tr></thead>
         <tbody id="inst-body"></tbody>
       </table>
-      <button type="button" id="add-inst">הוסף אינסטרומנט</button>
+      <button type="button" id="add-inst">Add Instrument</button>
       <div class="actions">
-        <button type="submit">שמור</button>
+        <button type="submit">Save</button>
       </div>
     </form>
   </template>

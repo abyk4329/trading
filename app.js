@@ -1,4 +1,41 @@
-/* Simple SPA client for TradingJournal */
+/* Simple SPA client for Trading Journal */
+
+// Predefined financial instruments with their specifications
+const PREDEFINED_INSTRUMENTS = {
+  'GOLD': {
+    symbol: 'GOLD',
+    displayName: 'Gold (XAU/USD)',
+    tick_size: 0.01,
+    tick_value: 0.01,
+    contract_size: 100,
+    category: 'Commodities'
+  },
+  'MINI_NASDAQ': {
+    symbol: 'MINI_NASDAQ',
+    displayName: 'Mini Nasdaq (MNQ)',
+    tick_size: 0.25,
+    tick_value: 1.25,
+    contract_size: 1,
+    category: 'Indices'
+  },
+  'MICRO_NASDAQ': {
+    symbol: 'MICRO_NASDAQ',
+    displayName: 'Micro Nasdaq (NQ)',
+    tick_size: 0.25,
+    tick_value: 0.25,
+    contract_size: 1,
+    category: 'Indices'
+  },
+  'NASDAQ_100': {
+    symbol: 'NASDAQ_100',
+    displayName: 'Nasdaq 100 (NDX)',
+    tick_size: 0.25,
+    tick_value: 25.00,
+    contract_size: 1,
+    category: 'Indices'
+  }
+};
+
 const state = {
   baseUrl: '',
   settings: null,
@@ -45,11 +82,39 @@ async function refreshSettings(){
       state.settings = res.settings;
       state.instruments = res.instruments || [];
       state.balance_current = res.balance_current || 0;
+
+      // If no instruments are configured, use predefined ones
+      if (!state.instruments || state.instruments.length === 0) {
+        state.instruments = Object.values(PREDEFINED_INSTRUMENTS);
+      }
+    } else {
+      // Use default settings and predefined instruments
+      state.settings = {
+        starting_balance: 10000,
+        daily_target: 100,
+        daily_max_loss: 50,
+        tp_pct: 0.02,
+        sl_pct: 0.01
+      };
+      state.instruments = Object.values(PREDEFINED_INSTRUMENTS);
+      state.balance_current = 10000;
     }
-  } catch (e) { toast('שגיאה בטעינת הגדרות'); }
+  } catch (e) {
+    // Fallback to predefined instruments
+    state.settings = {
+      starting_balance: 10000,
+      daily_target: 100,
+      daily_max_loss: 50,
+      tp_pct: 0.02,
+      sl_pct: 0.01
+    };
+    state.instruments = Object.values(PREDEFINED_INSTRUMENTS);
+    state.balance_current = 10000;
+    toast('Using default settings - please configure in Settings');
+  }
 }
 
-function fmt(n){ if(n===undefined||n===null||n==='') return '—'; return Number(n).toLocaleString('he-IL', { maximumFractionDigits: 2 }); }
+function fmt(n){ if(n===undefined||n===null||n==='') return '—'; return '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 }); }
 function pct(n){ if(n===undefined||n===null||n==='') return '—'; return (Number(n)*100).toFixed(0)+'%'; }
 
 function renderDashboard(){
@@ -125,9 +190,10 @@ function renderNewTrade(){
   form.date.value = now.toISOString().slice(0,10);
   form.time.value = now.toTimeString().slice(0,5);
 
-  // Symbols
+  // Symbols - use predefined instruments
   const inst = state.instruments || [];
-  symbolSel.innerHTML = inst.map(i=>`<option value="${i.symbol}">${i.symbol}</option>`).join('');
+  symbolSel.innerHTML = '<option value="">Select Symbol</option>' +
+    inst.map(i => `<option value="${i.symbol}">${i.displayName || i.symbol}</option>`).join('');
 
   // Load draft from localStorage
   const draft = JSON.parse(localStorage.getItem('new-trade-draft')||'{}');
@@ -165,9 +231,9 @@ function renderNewTrade(){
     const data = Object.fromEntries(new FormData(form).entries());
 
     // Validations
-    if (!data.symbol) return toast('בחרי סימבול');
-    if (!data.direction) return toast('בחרי כיוון');
-    if (data.entry && data.stop && Number(data.entry) === Number(data.stop)) return toast('Entry ו-Stop לא יכולים להיות זהים');
+    if (!data.symbol) return toast('Please select a symbol');
+    if (!data.direction) return toast('Please select direction');
+    if (data.entry && data.stop && Number(data.entry) === Number(data.stop)) return toast('Entry and Stop cannot be the same');
 
     const payload = {
       date: data.date,
@@ -187,11 +253,11 @@ function renderNewTrade(){
     try {
       const res = await apiPost('/api/trades', payload);
       if (res.ok) {
-        toast('העסקה נשמרה');
+        toast('Trade saved successfully');
         localStorage.removeItem('new-trade-draft');
         window.location.hash = '#trades';
       } else throw new Error(res.error||'');
-    } catch (e) { toast('שמירה נכשלה'); }
+    } catch (e) { toast('Failed to save trade'); }
   });
 }
 
@@ -203,7 +269,7 @@ function renderTrades(){
   const tbody = container.querySelector('#trades-body');
   const symSel = container.querySelector('#flt-symbol');
   // Populate symbols
-  symSel.innerHTML = '<option value="">כל הסימבולים</option>' + (state.instruments||[]).map(i=>`<option>${i.symbol}</option>`).join('');
+  symSel.innerHTML = '<option value="">All Symbols</option>' + (state.instruments||[]).map(i=>`<option value="${i.symbol}">${i.displayName || i.symbol}</option>`).join('');
   async function load(){
     const sym = symSel.value || '';
     const q = sym ? ('?symbol='+encodeURIComponent(sym)) : '';
@@ -230,14 +296,14 @@ function renderTrades(){
     container.querySelectorAll('button.mark').forEach(btn => btn.addEventListener('click', async () => {
       const id = btn.dataset.id; const action = btn.dataset.action;
       const res = await apiPost(`/api/trades/${id}/mark`, { action });
-      if (res.ok) { toast('עודכן'); load(); } else toast('שגיאה');
+      if (res.ok) { toast('Updated successfully'); load(); } else toast('Update failed');
     }));
     container.querySelectorAll('button.mark-partial').forEach(btn => btn.addEventListener('click', async () => {
       const id = btn.dataset.id;
-      const percent = Number(prompt('אחוז למימוש חלקי (0-100):', '50'));
+      const percent = Number(prompt('Partial close percentage (0-100):', '50'));
       if (!isFinite(percent)) return;
       const res = await apiPost(`/api/trades/${id}/mark`, { action: 'Partial', percent });
-      if (res.ok) { toast('עודכן'); load(); } else toast('שגיאה');
+      if (res.ok) { toast('Updated successfully'); load(); } else toast('Update failed');
     }));
   }
 
@@ -305,8 +371,8 @@ function renderSettings(){
       instruments
     };
     const res = await apiPost('/api/settings', payload);
-    if (res.ok) { toast('הוגדר בהצלחה'); refreshSettings(); }
-    else toast('שגיאה בשמירת הגדרות');
+    if (res.ok) { toast('Settings saved successfully'); refreshSettings(); }
+    else toast('Failed to save settings');
   });
 }
 
