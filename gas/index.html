@@ -48,6 +48,70 @@
 
   <div id="toast" class="toast hidden"></div>
 
+    <script>
+    // Simple diagnostic script
+    console.log('Trading Journal starting...');
+    console.log('WEB_APP_URL:', window.WEB_APP_URL);
+
+    // Test if files are loading
+    setTimeout(() => {
+      console.log('Checking if templates exist...');
+      const dashboardTpl = document.getElementById('tpl-dashboard');
+      const newTpl = document.getElementById('tpl-new');
+      console.log('Dashboard template:', dashboardTpl ? 'Found' : 'Missing');
+      console.log('New trade template:', newTpl ? 'Found' : 'Missing');
+
+      // Test API
+      if (window.WEB_APP_URL) {
+        console.log('Testing API...');
+        fetch(window.WEB_APP_URL + '?path=/api/settings')
+          .then(r => r.json())
+          .then(data => console.log('API test result:', data))
+          .catch(err => console.error('API test failed:', err));
+      }
+    }, 1000);
+
+    // Fallback navigation if main script fails
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM loaded, setting up fallback navigation...');
+
+      // Add click handlers for navigation buttons
+      document.querySelectorAll('.nav-link').forEach(button => {
+        button.addEventListener('click', (e) => {
+          e.preventDefault();
+          const route = e.target.dataset.route;
+          console.log('Navigation clicked:', route);
+
+          // Update URL
+          window.location.hash = route;
+
+          // Update active state
+          document.querySelectorAll('.nav-link').forEach(btn => btn.classList.remove('active'));
+          e.target.classList.add('active');
+
+          // Basic content switching
+          document.querySelectorAll('.view').forEach(view => view.classList.add('hidden'));
+          const viewId = 'view-' + route.substring(1);
+          const targetView = document.getElementById(viewId);
+          if (targetView) {
+            targetView.classList.remove('hidden');
+            // Load basic content
+            if (route === '#dashboard' && document.getElementById('tpl-dashboard')) {
+              targetView.innerHTML = document.getElementById('tpl-dashboard').innerHTML;
+            }
+          }
+        });
+      });
+
+      // Load dashboard by default
+      setTimeout(() => {
+        if (!window.location.hash) {
+          window.location.hash = '#dashboard';
+        }
+      }, 100);
+    });
+  </script>
+
   <script>
     <?!= include('app'); ?>
   </script>

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trading Journal - Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+    .success { background: #d4edda; border-color: #c3e6cb; }
+    .error { background: #f8d7da; border-color: #f5c6cb; }
+    button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Trading Journal - Diagnostic Test</h1>
+
+  <div class="test-section">
+    <h3>1. Basic HTML Loading</h3>
+    <p id="html-test">✅ HTML loaded successfully</p>
+  </div>
+
+  <div class="test-section">
+    <h3>2. Web App URL</h3>
+    <p id="url-test">Checking...</p>
+    <script>
+      document.getElementById('url-test').textContent =
+        window.WEB_APP_URL ? '✅ URL found: ' + window.WEB_APP_URL : '❌ URL not found';
+    </script>
+  </div>
+
+  <div class="test-section">
+    <h3>3. Navigation Test</h3>
+    <button onclick="testNavigation('dashboard')">Dashboard</button>
+    <button onclick="testNavigation('new')">New Trade</button>
+    <button onclick="testNavigation('trades')">Trade List</button>
+    <button onclick="testNavigation('settings')">Settings</button>
+    <p id="nav-test">Click buttons to test navigation</p>
+  </div>
+
+  <div class="test-section">
+    <h3>4. API Test</h3>
+    <button onclick="testAPI()">Test API Connection</button>
+    <p id="api-test">Click to test API</p>
+  </div>
+
+  <div class="test-section">
+    <h3>5. Template Loading</h3>
+    <p id="template-test">Checking templates...</p>
+  </div>
+
+  <script>
+    function testNavigation(route) {
+      document.getElementById('nav-test').textContent = `✅ Navigation to ${route} works!`;
+      // Update URL hash
+      window.location.hash = '#' + route;
+    }
+
+    async function testAPI() {
+      const apiTest = document.getElementById('api-test');
+      apiTest.textContent = 'Testing API...';
+
+      try {
+        if (!window.WEB_APP_URL) {
+          apiTest.textContent = '❌ No Web App URL found';
+          return;
+        }
+
+        const response = await fetch(window.WEB_APP_URL + '?path=/api/settings');
+        const data = await response.json();
+
+        if (data.ok) {
+          apiTest.textContent = '✅ API working! Settings loaded.';
+        } else {
+          apiTest.textContent = '❌ API error: ' + (data.error || 'Unknown error');
+        }
+      } catch (error) {
+        apiTest.textContent = '❌ API failed: ' + error.message;
+      }
+    }
+
+    // Check templates on load
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const dashboardTpl = document.getElementById('tpl-dashboard');
+        const templateTest = document.getElementById('template-test');
+        templateTest.textContent = dashboardTpl ?
+          '✅ Templates loaded successfully' :
+          '❌ Templates not found - check if partials.html is uploaded';
+      }, 500);
+    });
+  </script>
+
+  <!-- Include templates for testing -->
+  <?!= include('partials'); ?>
+</body>
+</html>

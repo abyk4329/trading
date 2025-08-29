@@ -1,6 +1,6 @@
-/* Simple SPA client for Trading Journal (Apps Script include) */
+// Enhanced error handling and logging
+console.log('=== Trading Journal App Starting ===');
 
-// Predefined financial instruments with their specifications
 const PREDEFINED_INSTRUMENTS = {
   'GOLD': {
     symbol: 'GOLD',
@@ -51,38 +51,96 @@ const routes = {
   '#settings': renderSettings,
 };
 
-window.addEventListener('load', init);
-window.addEventListener('hashchange', navigate);
+console.log('Setting up event listeners...');
 
-// Add click handlers for navigation buttons
+// Setup event listeners
+window.addEventListener('load', () => {
+  console.log('Window loaded, initializing app...');
+  init().catch(err => {
+    console.error('Init failed:', err);
+    toast('Failed to initialize app: ' + err.message);
+  });
+});
+
+window.addEventListener('hashchange', () => {
+  console.log('Hash changed to:', window.location.hash);
+  navigate();
+});
+
+// Enhanced navigation click handler
 document.addEventListener('click', (e) => {
   if (e.target.classList.contains('nav-link')) {
     e.preventDefault();
     const route = e.target.dataset.route;
+    console.log('Navigation button clicked:', route);
     window.location.hash = route;
   }
 });
 
 async function init(){
-  state.baseUrl = window.WEB_APP_URL || '';
-  await refreshSettings();
-  navigate();
+  try {
+    console.log('Initializing app...');
+    state.baseUrl = window.WEB_APP_URL || '';
+    console.log('Base URL:', state.baseUrl);
+
+    await refreshSettings();
+    navigate();
+
+    console.log('App initialized successfully');
+  } catch (error) {
+    console.error('Init error:', error);
+    // Fallback to basic functionality
+    state.settings = {
+      starting_balance: 10000,
+      daily_target: 100,
+      daily_max_loss: 50,
+      tp_pct: 0.02,
+      sl_pct: 0.01
+    };
+    state.instruments = Object.values(PREDEFINED_INSTRUMENTS);
+    state.balance_current = 10000;
+    navigate();
+    toast('Using fallback settings - check console for details');
+  }
 }
 
 function navigate(){
-  const hash = window.location.hash || '#dashboard';
-  document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
-  document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
-  const activeLink = document.querySelector(`[data-route="${hash}"]`);
-  if (activeLink) activeLink.classList.add('active');
-  const fn = routes[hash] || renderDashboard;
-  fn();
+  try {
+    const hash = window.location.hash || '#dashboard';
+    console.log('Navigating to:', hash);
+
+    // Hide all views
+    document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+
+    // Remove active class from all nav links
+    document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+
+    // Add active class to current nav link
+    const activeLink = document.querySelector(`[data-route="${hash}"]`);
+    if (activeLink) {
+      activeLink.classList.add('active');
+    }
+
+    // Render the appropriate view
+    const fn = routes[hash] || renderDashboard;
+    if (typeof fn === 'function') {
+      fn();
+    } else {
+      console.error('Route function not found for:', hash);
+      renderDashboard();
+    }
+  } catch (error) {
+    console.error('Navigation error:', error);
+    toast('Navigation error: ' + error.message);
+  }
 }
 
 async function refreshSettings(){
   try {
+    console.log('Refreshing settings...');
     const res = await apiGet('/api/settings');
-    if (res.ok) {
+
+    if (res && res.ok) {
       state.settings = res.settings;
       state.instruments = res.instruments || [];
       state.balance_current = res.balance_current || 0;
@@ -91,14 +149,29 @@ async function refreshSettings(){
       if (!state.instruments || state.instruments.length === 0) {
         state.instruments = Object.values(PREDEFINED_INSTRUMENTS);
       }
+
+      console.log('Settings loaded:', state.settings);
     } else {
-      // Use default settings and predefined instruments
-      state.settings = {
-        starting_balance: 10000,
-        daily_target: 100,
-        daily_max_loss: 50,
-        tp_pct: 0.02,
-        sl_pct: 0.01
+      throw new Error(res?.error || 'Failed to load settings');
+    }
+  } catch (error) {
+    console.error('Settings refresh failed:', error);
+
+    // Use default settings and predefined instruments
+    state.settings = {
+      starting_balance: 10000,
+      daily_target: 100,
+      daily_max_loss: 50,
+      tp_pct: 0.02,
+      sl_pct: 0.01
+    };
+    state.instruments = Object.values(PREDEFINED_INSTRUMENTS);
+    state.balance_current = 10000;
+
+    console.log('Using fallback settings');
+    toast('Using default settings - API may not be working');
+  }
+}
       };
       state.instruments = Object.values(PREDEFINED_INSTRUMENTS);
       state.balance_current = 10000;
