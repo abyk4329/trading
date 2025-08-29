@@ -26,6 +26,9 @@ async function init(){
 function navigate(){
   const hash = window.location.hash || '#dashboard';
   document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+  document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+  const activeLink = document.querySelector(`a[href="${hash}"]`);
+  if (activeLink) activeLink.classList.add('active');
   const fn = routes[hash] || renderDashboard;
   fn();
 }
