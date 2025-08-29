@@ -1,46 +1,101 @@
-# TradingJournal — Google Sheets Web App
+# יומן מסחר - Trading Journal
 
-אפליקציית ווב קלה לניהול יומן עסקאות, רצה כ‑Google Apps Script Web App ונשענת על Google Sheets.
+יומן מסחר מתקדם בעברית עם ממשק נקי ומודרני, מותאם לנייד.
 
-## מה כלול
-- צד שרת (Apps Script): `Code.gs` — יצירת הגיליונות, REST-like endpoints, לוגיקת חישוב ועדכון יתרה.
-- צד לקוח: `index.html`, `app.js`, `styles.css` — SPA RTL עם לוח מחוונים, יצירת עסקה, רשימת עסקאות והגדרות.
+## גרסאות זמינות
 
-## יצירת הפרויקט ב‑Apps Script
-1. פתחי את Google Drive, צרי Google Apps Script חדש (Empty project).
-2. מחקי קבצים קיימים, והעתיקי את תוכן `Code.gs` לקובץ בשם `Code.gs`.
-3. צרי קבצי HTML Template באותו פרויקט בשם `index`, `app`, `styles`, `partials` והדביקי את התוכן של `gas/index.html`, `gas/app.html`, `gas/styles.html`, `gas/partials.html` בהתאמה.
-   - לחלופין, ניתן לפרוס מהקבצים כאן דרך `clasp` (מתקדם).
-4. בתפריט Services ודאי שיש הרשאות ל‑Drive/Sheets במידת הצורך כאשר ירוץ לראשונה.
+### 🚀 גרסה סטטית - GitHub Pages (מומלץ)
+קובץ HTML יחיד ללא תלויות חיצוניות, מושלם לפריסה מהירה.
 
-## Deploy כ‑Web App
-1. בתפריט: Deploy → Manage deployments → New deployment.
-2. Type: Web App.
-3. Description: TradingJournal.
-4. Execute as: Me.
-5. Who has access: Anyone (או Anyone with link).
-6. לחץ Deploy וקבלי את ה‑URL.
+**תכונות:**
+- 📱 תמיכה מלאה בנייד
+- 💾 שמירה מקומית (localStorage)
+- ⚡ טעינה מיידית
+- 🔒 ללא צורך בשרת
 
-ביקורים ל‑URL בלי `path` יגישו את ה‑SPA. קריאות API דרך `?path=/api/...`.
+**פריסה:**
+1. העלה את `index-static.html` לריפוזיטורי GitHub
+2. שנה שם ל-`index.html`
+3. Settings > Pages > Deploy from branch
+4. בחר branch ראשי ותיקיית root
 
-## מבנה Sheets
-האפליקציה תיצור מסמך בשם `TradingJournal` עם גיליונות:
-- `Settings`: טבלת key/value (starting_balance, daily_target, daily_max_loss, tp_pct, sl_pct), ומתחת כותרת אינסטרומנטים: `symbol, tick_size, tick_value, contract_size`.
-- `Trades`: כותרות בדיוק לפי הדרישה.
-- `Balances`: כותרות: datetime, balance, change, reason.
+### ☁️ גרסה מקורית - Google Apps Script
+גרסה מלאה עם שמירה ב-Google Sheets.
 
-## בדיקות/ולידציות
-- צד שרת מוודא יצירת כותרות, בודק אי-שוויון Entry/Stop, ומחשב כמות לפי סיכון כספי וה‑tick settings.
-- סימון TP/SL/BE/Partial מעדכן PnL, מזכה/מחייב עמלות, מעדכן balance_after ומוסיף רשומה ל‑Balances.
-- צד לקוח מבצע ולידציות שדות בסיסיות ושומר טיוטה של טופס "עסקה חדשה" ב‑localStorage.
+## תכונות עיקריות
 
-## טיפים
-- ל‑MNQ הוסיפי שורה ב‑Settings תחת טבלת האינסטרומנטים (למשל: symbol=MNQ, tick_size=0.25, tick_value=0.5, contract_size=1).
-- שינוי אחוזי TP/SL ויעדים דרך מסך "הגדרות" ייכתב חזרה ל‑Settings.
-- ניתן לשנות את ברירת המחדל ל‑starting_balance ב‑Settings.
+- 📊 דאשבורד עם סטטיסטיקות בזמן אמת
+- 📝 רישום עסקאות חדשות עם חישובים אוטומטיים
+- 📋 רשימת עסקאות עם סינון מתקדם
+- ⚙️ הגדרות מותאמות אישית
+- 💾 שמירה מקומית או ב-Google Sheets
+- 📱 תמיכה מלאה בנייד
+- 🌐 ממשק בעברית עם כיוון מימין לשמאל
 
-## קריאות API לדוגמה (באמצעות הדפדפן)
-- GET הגדרות: `<WEB_APP_URL>/exec?path=/api/settings`
-- יצירת עסקה: POST ל‑`<WEB_APP_URL>/exec?path=/api/trades` עם JSON
-- סימון TP: POST ל‑`<WEB_APP_URL>/exec?path=/api/trades/1/mark` עם `{ "action": "TP" }`
+## התקנה ופריסה
+
+### גרסה סטטית (GitHub Pages)
+
+```bash
+# העלה את הקובץ index-static.html ל-GitHub
+# שנה שם ל-index.html
+# הפעל GitHub Pages מהגדרות הריפוזיטורי
+```
+
+### גרסה מקורית (Google Apps Script)
+
+1. פתח Google Drive, צור Google Apps Script חדש
+2. מחק קבצים קיימים, העתק `gas/Code.gs` ל-`Code.gs`
+3. צור קבצי HTML Template: `index`, `app`, `styles`, `partials`
+4. Deploy כ-Web App עם הרשאות "Anyone"
+
+## שימוש
+
+1. **דאשבורד**: צפה בסטטיסטיקות יומיות ושבועיות
+2. **עסקה חדשה**: הוסף עסקאות עם חישובים אוטומטיים של סיכון ורווח
+3. **רשימת עסקאות**: צפה ונהל את כל העסקאות עם אפשרויות סינון
+4. **הגדרות**: התאם את היתרה, יעדים והגדרות סיכון
+
+## מכשירים נתמכים
+
+- זהב (XAU/USD)
+- מיני נאסד"ק (MNQ)
+- מיקרו נאסד"ק (NQ)
+- נאסד"ק 100 (NDX)
+
+## טכנולוגיות
+
+- HTML5
+- CSS3 עם משתנים וגריד מודרני
+- JavaScript ES6+ עם localStorage
+- גופן Inter מ-Google Fonts
+- עיצוב רספונסיבי לכל המכשירים
+
+## תכונות מתקדמות
+
+- חישוב אוטומטי של TP ו-SL
+- חישוב R:R (יחס סיכון-רווח)
+- סטטיסטיקות בזמן אמת
+- שמירה אוטומטית של טיוטות
+- תמיכה ב-PWA (Progressive Web App)
+- ממשק נגיש עם תמיכה במקלדת
+
+## מבנה קבצים
+
+```
+trading/
+├── index-static.html    # גרסה סטטית ל-GitHub Pages
+├── index-local.html     # גרסה מקומית לבדיקה
+├── gas/                 # קבצי Google Apps Script
+│   ├── Code.gs
+│   ├── index.html
+│   ├── app.html
+│   ├── styles.html
+│   └── partials.html
+└── README.md
+```
+
+## רישיון
+
+MIT License - חופשי לשימוש ולהפצה.
 

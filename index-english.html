@@ -1,0 +1,1243 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trading Journal - Professional Trading Management</title>
+
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#9E7E67" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Trading Journal" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <!-- Modern Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* Modern Clean Trading Journal */
+
+    /* CSS Variables */
+    :root {
+      --bg: #FAFAF8;
+      --card: rgba(255, 255, 255, 0.9);
+      --border: #E8E8E5;
+      --fg: #1A1A18;
+      --muted: #6B6B5F;
+      --accent: #9E7E67;
+      --ok: #10B981;
+      --error: #EF4444;
+      --warning: #F59E0B;
+      --radius: 12px;
+      --radius-lg: 16px;
+      --shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.08);
+      --transition: all 0.2s ease;
+    }
+
+    /* Base Styles */
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      direction: ltr;
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+      font-variant-numeric: tabular-nums;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Typography */
+    h1, h2, h3, h4, h5, h6 {
+      font-weight: 600;
+      line-height: 1.3;
+      letter-spacing: -0.02em;
+      margin: 0 0 1rem 0;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+    }
+
+    h2 {
+      font-size: 2rem;
+      font-weight: 600;
+    }
+
+    h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    p {
+      margin: 0 0 1rem 0;
+      color: var(--muted);
+    }
+
+    button {
+      font-family: inherit;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      letter-spacing: -0.01em;
+    }
+
+    input, select, textarea {
+      font-family: inherit;
+      font-weight: 400;
+    }
+
+    /* Header & Navigation */
+    .topbar {
+      position: sticky;
+      top: 0;
+      background: rgba(234, 234, 231, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      z-index: 10;
+      box-shadow: var(--shadow);
+    }
+
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    .app-title {
+      margin: 0;
+      padding: 1.5rem 0;
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: var(--fg);
+      text-align: center;
+      letter-spacing: -0.025em;
+    }
+
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0 0 1.5rem 0;
+      justify-content: center;
+      border-top: 1px solid var(--border);
+      margin-top: 1rem;
+    }
+
+    .nav-link {
+      color: var(--muted);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.9rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: var(--radius);
+      transition: var(--transition);
+      position: relative;
+      letter-spacing: -0.01em;
+    }
+
+    .nav-link:hover,
+    .nav-link.active {
+      color: var(--accent);
+      background: rgba(158, 126, 103, 0.08);
+      transform: translateY(-1px);
+    }
+
+    /* Main Content */
+    #app {
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .view.hidden {
+      display: none;
+    }
+
+    /* Cards */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
+
+    .card {
+      background: var(--card);
+      padding: 2rem;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      text-align: center;
+      transition: var(--transition);
+      box-shadow: var(--shadow);
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .card .label {
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-bottom: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 600;
+    }
+
+    .card .value {
+      font-size: 2.25rem;
+      font-weight: 700;
+      color: var(--fg);
+      margin: 0;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+    }
+
+    /* Progress */
+    .progress {
+      background: var(--card);
+      padding: 1.5rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .progress-label {
+      color: var(--muted);
+      font-size: 0.875rem;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 0.5rem;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--ok);
+      transition: width 0.3s ease;
+    }
+
+    .progress-stats {
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .stat {
+      background: var(--card);
+      padding: 1.5rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      text-align: center;
+      transition: transform 0.2s ease;
+    }
+
+    .stat:hover {
+      transform: translateY(-1px);
+    }
+
+    .stat .label {
+      color: var(--muted);
+      font-size: 0.875rem;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stat .value {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--fg);
+      margin: 0;
+    }
+
+    /* Forms */
+    .form {
+      background: var(--card);
+      padding: 2.5rem;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      max-width: 900px;
+      margin: 0 auto;
+      box-shadow: var(--shadow);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .form label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--fg);
+      letter-spacing: -0.01em;
+    }
+
+    .form input,
+    .form select,
+    .form textarea {
+      padding: 1rem;
+      border-radius: var(--radius);
+      border: 1.5px solid var(--border);
+      background: var(--bg);
+      color: var(--fg);
+      font-size: 0.9rem;
+      font-family: inherit;
+      transition: var(--transition);
+      font-weight: 500;
+    }
+
+    .form input:focus,
+    .form select:focus,
+    .form textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(158, 126, 103, 0.1);
+      transform: translateY(-1px);
+    }
+
+    .side-info {
+      margin: 2.5rem 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      padding: 2rem;
+      background: rgba(234, 234, 231, 0.7);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+    }
+
+    .side-info > div {
+      text-align: center;
+      font-size: 0.875rem;
+      color: var(--fg);
+      font-weight: 600;
+      padding: 1rem;
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      letter-spacing: -0.01em;
+    }
+
+    .inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .actions {
+      display: flex;
+      gap: 1.5rem;
+      justify-content: center;
+      margin-top: 3rem;
+    }
+
+    .actions button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: var(--radius);
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: var(--transition);
+      letter-spacing: -0.01em;
+      min-width: 160px;
+      box-shadow: var(--shadow);
+    }
+
+    .actions button:hover {
+      background: #8B7355;
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .actions .secondary {
+      background: var(--muted);
+      color: white;
+    }
+
+    .actions .secondary:hover {
+      background: #555649;
+    }
+
+    /* Filters */
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+      margin-bottom: 2rem;
+      padding: 1rem;
+      background: var(--card);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .filters input,
+    .filters select {
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--fg);
+      font-size: 0.875rem;
+    }
+
+    .filters button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .filters button:hover {
+      background: #8B6F5A;
+    }
+
+    /* Table */
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card);
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    .table th,
+    .table td {
+      padding: 1rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .table th {
+      background: var(--bg);
+      font-weight: 600;
+      color: var(--fg);
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+
+    .table tbody tr:hover {
+      background: var(--bg);
+    }
+
+    .table button {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .table button:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--card);
+      color: var(--fg);
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      z-index: 1000;
+    }
+
+    .toast.hidden {
+      display: none;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .nav {
+        flex-wrap: wrap;
+        gap: 1rem;
+        padding: 1rem;
+      }
+
+      #app {
+        padding: 1rem;
+      }
+
+      .cards,
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .filters {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .actions {
+        flex-direction: column;
+      }
+
+      .side-info {
+        flex-direction: column;
+        text-align: center;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .table th,
+      .table td {
+        padding: 0.5rem;
+        font-size: 0.75rem;
+      }
+
+      .card .value,
+      .stat .value {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="header-content">
+      <h1 class="app-title">Trading Journal</h1>
+      <nav class="nav">
+        <button class="nav-link" data-route="#dashboard">Dashboard</button>
+        <button class="nav-link" data-route="#new">New Trade</button>
+        <button class="nav-link" data-route="#trades">Trades List</button>
+        <button class="nav-link" data-route="#settings">Settings</button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="app">
+    <section id="view-dashboard" class="view hidden"></section>
+    <section id="view-new" class="view hidden"></section>
+    <section id="view-trades" class="view hidden"></section>
+    <section id="view-settings" class="view hidden"></section>
+  </main>
+
+  <!-- Templates -->
+  <template id="tpl-dashboard">
+    <div class="cards">
+      <div class="card"><div class="label">Current Balance</div><div class="value" id="cur-balance">—</div></div>
+      <div class="card"><div class="label">Daily Target</div><div class="value" id="daily-target">—</div></div>
+      <div class="card"><div class="label">Daily Max Loss</div><div class="value" id="daily-max-loss">—</div></div>
+    </div>
+    <div class="progress">
+      <div class="progress-label">Daily Target Progress</div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      <div class="progress-stats"><span id="today-pnl">0</span> / <span id="today-target">0</span></div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat"><div class="label">Daily Win Rate</div><div class="value" id="hit-rate-day">—</div></div>
+      <div class="stat"><div class="label">Weekly Win Rate</div><div class="value" id="hit-rate-week">—</div></div>
+      <div class="stat"><div class="label">Average R:R</div><div class="value" id="avg-rr">—</div></div>
+      <div class="stat"><div class="label">Daily P&L</div><div class="value" id="sum-day">—</div></div>
+      <div class="stat"><div class="label">Weekly P&L</div><div class="value" id="sum-week">—</div></div>
+    </div>
+  </template>
+
+  <template id="tpl-new">
+    <form id="new-trade-form" class="form">
+      <div class="form-grid">
+        <label>Date<input type="date" name="date" required></label>
+        <label>Time<input type="time" name="time" required></label>
+        <label>Symbol<select name="symbol" id="symbol-select" required>
+          <option value="">Select Symbol</option>
+          <option value="GOLD">Gold (XAU/USD)</option>
+          <option value="MINI_NASDAQ">Mini Nasdaq (MNQ)</option>
+          <option value="MICRO_NASDAQ">Micro Nasdaq (NQ)</option>
+          <option value="NASDAQ_100">Nasdaq 100 (NDX)</option>
+        </select></label>
+        <label>Direction<select name="direction" required>
+          <option value="Long">Long</option>
+          <option value="Short">Short</option>
+        </select></label>
+        <label>Entry Price<input type="number" step="0.01" name="entry" id="entry" placeholder="0.00"></label>
+        <label>Stop Loss<input type="number" step="0.01" name="stop" id="stop" placeholder="0.00"></label>
+        <label title="TP will be calculated symmetrically to Entry/Stop if checked">
+          Take Profit
+          <input type="number" step="0.01" name="take_profit" id="take_profit" placeholder="0.00">
+        </label>
+        <label>Quantity<input type="number" step="1" name="qty" id="qty" placeholder="1"></label>
+        <label>Commission ($)<input type="number" step="0.01" name="commission" id="commission" value="0" placeholder="0.00"></label>
+        <label>Additional Fees ($)<input type="number" step="0.01" name="fees" id="fees" value="0" placeholder="0.00"></label>
+        <label>Notes<textarea name="notes" placeholder="Trade notes..."></textarea></label>
+      </div>
+      <div class="side-info">
+        <div>Balance: <span id="si-balance">—</span></div>
+        <div>TP%: <span id="si-tp">—</span> | SL%: <span id="si-sl">—</span></div>
+        <div>Risk ($): <span id="si-risk">—</span></div>
+        <div>Target ($): <span id="si-tp-amount">—</span> | Stop ($): <span id="si-sl-amount">—</span></div>
+        <div>R:R: <span id="si-rr">—</span></div>
+        <label class="inline"><input type="checkbox" id="auto-tp" checked> Auto-calculate TP</label>
+      </div>
+      <div class="actions">
+        <button type="submit" data-status="Planned">Save as Planned</button>
+        <button type="submit" data-status="Executed" class="secondary">Mark as Executed</button>
+      </div>
+    </form>
+  </template>
+
+  <template id="tpl-trades">
+    <div class="filters">
+      <input type="date" id="flt-start" placeholder="Start Date" />
+      <input type="date" id="flt-end" placeholder="End Date" />
+      <select id="flt-symbol">
+        <option value="">All Symbols</option>
+        <option value="GOLD">Gold (XAU/USD)</option>
+        <option value="MINI_NASDAQ">Mini Nasdaq (MNQ)</option>
+        <option value="MICRO_NASDAQ">Micro Nasdaq (NQ)</option>
+        <option value="NASDAQ_100">Nasdaq 100 (NDX)</option>
+      </select>
+      <select id="flt-status" multiple>
+        <option>Planned</option>
+        <option>Executed</option>
+        <option>TP</option>
+        <option>SL</option>
+        <option>BE</option>
+        <option>Partial</option>
+        <option>Cancelled</option>
+      </select>
+      <button id="apply-filter">Filter</button>
+    </div>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>ID</th><th>Date</th><th>Time</th><th>Symbol</th><th>Direction</th><th>Entry</th><th>Stop</th><th>TP</th><th>Qty</th><th>R:R</th><th>Status</th><th>P&L ($)</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="trades-body"></tbody>
+    </table>
+  </template>
+
+  <template id="tpl-settings">
+    <form id="settings-form" class="form">
+      <div class="form-grid">
+        <label>Starting Balance ($)<input type="number" step="0.01" name="starting_balance" required placeholder="10000.00"></label>
+        <label>Daily Target ($)<input type="number" step="0.01" name="daily_target" required placeholder="100.00"></label>
+        <label>Daily Max Loss ($)<input type="number" step="0.01" name="daily_max_loss" required placeholder="50.00"></label>
+        <label>TP %<input type="number" step="0.01" name="tp_pct" required placeholder="2.00"></label>
+        <label>SL %<input type="number" step="0.01" name="sl_pct" required placeholder="1.00"></label>
+      </div>
+      <h3>Instruments</h3>
+      <table class="table">
+        <thead><tr><th>Symbol</th><th>Tick Size</th><th>Tick Value ($)</th><th>Contract Size</th><th></th></tr></thead>
+        <tbody id="inst-body"></tbody>
+      </table>
+      <button type="button" id="add-inst">Add Instrument</button>
+      <div class="actions">
+        <button type="submit">Save</button>
+      </div>
+    </form>
+  </template>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script>
+    // Trading Journal App - Static Version with English Interface
+
+    const PREDEFINED_INSTRUMENTS = {
+      'GOLD': {
+        symbol: 'GOLD',
+        displayName: 'Gold (XAU/USD)',
+        tick_size: 0.01,
+        tick_value: 0.01,
+        contract_size: 100,
+        category: 'Commodities'
+      },
+      'MINI_NASDAQ': {
+        symbol: 'MINI_NASDAQ',
+        displayName: 'Mini Nasdaq (MNQ)',
+        tick_size: 0.25,
+        tick_value: 1.25,
+        contract_size: 1,
+        category: 'Indices'
+      },
+      'MICRO_NASDAQ': {
+        symbol: 'MICRO_NASDAQ',
+        displayName: 'Micro Nasdaq (NQ)',
+        tick_size: 0.25,
+        tick_value: 0.25,
+        contract_size: 1,
+        category: 'Indices'
+      },
+      'NASDAQ_100': {
+        symbol: 'NASDAQ_100',
+        displayName: 'Nasdaq 100 (NDX)',
+        tick_size: 0.25,
+        tick_value: 25.00,
+        contract_size: 1,
+        category: 'Indices'
+      }
+    };
+
+    const state = {
+      settings: null,
+      instruments: [],
+      balance_current: 0,
+      trades: [],
+    };
+
+    const routes = {
+      '#dashboard': renderDashboard,
+      '#new': renderNewTrade,
+      '#trades': renderTrades,
+      '#settings': renderSettings,
+    };
+
+    // Initialize app
+    window.addEventListener('load', () => {
+      init().catch(err => {
+        console.error('Init failed:', err);
+        toast('Error initializing application: ' + err.message);
+      });
+    });
+
+    window.addEventListener('hashchange', navigate);
+
+    // Navigation click handler
+    document.addEventListener('click', (e) => {
+      if (e.target.classList.contains('nav-link')) {
+        e.preventDefault();
+        const route = e.target.dataset.route;
+        if (route) {
+          window.location.hash = route;
+        }
+      }
+    });
+
+    async function init(){
+      console.log('=== Initializing Trading Journal ===');
+
+      // Check templates
+      const templates = ['tpl-dashboard', 'tpl-new', 'tpl-trades', 'tpl-settings'];
+      const missingTemplates = templates.filter(id => !document.getElementById(id));
+      if (missingTemplates.length > 0) {
+        throw new Error('Missing templates: ' + missingTemplates.join(', '));
+      }
+
+      // Load saved data
+      loadFromStorage();
+
+      // Ensure we have a hash
+      if (!window.location.hash) {
+        window.location.hash = '#dashboard';
+      }
+
+      navigate();
+      console.log('Application initialized successfully');
+    }
+
+    function navigate(){
+      const hash = window.location.hash || '#dashboard';
+      console.log('Navigating to:', hash);
+
+      // Hide all views
+      document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+
+      // Remove active class
+      document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+
+      // Add active class
+      const activeLink = document.querySelector(`[data-route="${hash}"]`);
+      if (activeLink) {
+        activeLink.classList.add('active');
+      }
+
+      // Render view
+      const fn = routes[hash] || renderDashboard;
+      if (typeof fn === 'function') {
+        fn();
+      } else {
+        renderDashboard();
+      }
+    }
+
+    function loadFromStorage(){
+      try {
+        // Load settings
+        const savedSettings = localStorage.getItem('trading_settings');
+        if (savedSettings) {
+          state.settings = JSON.parse(savedSettings);
+        } else {
+          // Default settings
+          state.settings = {
+            starting_balance: 10000,
+            daily_target: 515,
+            daily_max_loss: 1500,
+            tp_pct: 0.30,
+            sl_pct: 0.15
+          };
+        }
+
+        // Load instruments
+        const savedInstruments = localStorage.getItem('trading_instruments');
+        if (savedInstruments) {
+          state.instruments = JSON.parse(savedInstruments);
+        } else {
+          state.instruments = Object.values(PREDEFINED_INSTRUMENTS);
+        }
+
+        // Load trades
+        const savedTrades = localStorage.getItem('trading_trades');
+        if (savedTrades) {
+          state.trades = JSON.parse(savedTrades);
+        } else {
+          state.trades = [];
+        }
+
+        state.balance_current = state.settings.starting_balance || 10000;
+
+        console.log('Data loaded from local storage');
+      } catch (error) {
+        console.error('Error loading data:', error);
+        // Use defaults
+        state.settings = {
+          starting_balance: 10000,
+          daily_target: 515,
+          daily_max_loss: 1500,
+          tp_pct: 0.30,
+          sl_pct: 0.15
+        };
+        state.instruments = Object.values(PREDEFINED_INSTRUMENTS);
+        state.balance_current = 10000;
+        state.trades = [];
+      }
+    }
+
+    function saveToStorage(){
+      try {
+        localStorage.setItem('trading_settings', JSON.stringify(state.settings));
+        localStorage.setItem('trading_instruments', JSON.stringify(state.instruments));
+        localStorage.setItem('trading_trades', JSON.stringify(state.trades));
+        console.log('Data saved to local storage');
+      } catch (error) {
+        console.error('Error saving data:', error);
+        toast('Error saving data');
+      }
+    }
+
+    function fmt(n){ if(n===undefined||n===null||n==='') return '—'; return '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 }); }
+    function pct(n){ if(n===undefined||n===null||n==='') return '—'; return (Number(n)*100).toFixed(0)+'%'; }
+
+    function renderDashboard(){
+      console.log('Rendering dashboard...');
+      const container = document.getElementById('view-dashboard');
+      if (!container) return;
+
+      const template = document.getElementById('tpl-dashboard');
+      if (!template) return;
+
+      container.innerHTML = template.innerHTML;
+      container.classList.remove('hidden');
+
+      const s = state.settings || {};
+      document.getElementById('cur-balance').textContent = fmt(state.balance_current);
+      document.getElementById('daily-target').textContent = fmt(s.daily_target);
+      document.getElementById('daily-max-loss').textContent = fmt(s.daily_max_loss);
+
+      // Calculate today's stats
+      const today = new Date().toISOString().slice(0,10);
+      const todayTrades = state.trades.filter(t => t.date === today);
+
+      let sum = 0, wins = 0, los = 0, rrSum = 0, rrCnt = 0;
+      todayTrades.forEach(t => {
+        if (typeof t.pnl === 'number') sum += t.pnl;
+        if (typeof t.rr === 'number') { rrSum += t.rr; rrCnt++; }
+        if (t.status === 'TP' || (t.pnl > 0)) wins++;
+        if (t.status === 'SL' || (t.pnl < 0)) los++;
+      });
+
+      const target = Number(s.daily_target || 0);
+      const prog = target ? Math.max(0, Math.min(100, (sum/target)*100)) : 0;
+
+      document.getElementById('today-pnl').textContent = fmt(sum);
+      document.getElementById('today-target').textContent = fmt(target);
+      document.getElementById('progress-fill').style.width = prog + '%';
+      document.getElementById('hit-rate-day').textContent = ((wins+los)>0 ? Math.round((wins/(wins+los))*100) : 0) + '%';
+      document.getElementById('avg-rr').textContent = rrCnt ? fmt(rrSum/rrCnt) : '—';
+      document.getElementById('sum-day').textContent = fmt(sum);
+
+      // Weekly stats
+      const now = new Date();
+      const day = (now.getDay() + 6) % 7;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - day);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+
+      const weekTrades = state.trades.filter(t => {
+        const tradeDate = new Date(t.date);
+        return tradeDate >= monday && tradeDate <= sunday;
+      });
+
+      let weekSum = 0, weekWins = 0, weekLos = 0;
+      weekTrades.forEach(t => {
+        if (typeof t.pnl === 'number') weekSum += t.pnl;
+        if (t.status === 'TP' || (t.pnl > 0)) weekWins++;
+        if (t.status === 'SL' || (t.pnl < 0)) weekLos++;
+      });
+
+      document.getElementById('sum-week').textContent = fmt(weekSum);
+      document.getElementById('hit-rate-week').textContent = ((weekWins+weekLos)>0 ? Math.round((weekWins/(weekWins+weekLos))*100) : 0) + '%';
+    }
+
+    function renderNewTrade(){
+      console.log('Rendering new trade form...');
+      const container = document.getElementById('view-new');
+      if (!container) return;
+
+      const template = document.getElementById('tpl-new');
+      if (!template) return;
+
+      container.innerHTML = template.innerHTML;
+      container.classList.remove('hidden');
+
+      const form = container.querySelector('#new-trade-form');
+      const symbolSel = container.querySelector('#symbol-select');
+      const autoTP = container.querySelector('#auto-tp');
+
+      if (!form || !symbolSel) return;
+
+      const s = state.settings || {};
+      container.querySelector('#si-balance').textContent = fmt(state.balance_current);
+      container.querySelector('#si-tp').textContent = pct(Number(s.tp_pct || 0.3));
+      container.querySelector('#si-sl').textContent = pct(Number(s.sl_pct || 0.15));
+
+      const now = new Date();
+      form.date.value = now.toISOString().slice(0,10);
+      form.time.value = now.toTimeString().slice(0,5);
+
+      // Populate symbols
+      symbolSel.innerHTML = '<option value="">Select Symbol</option>' +
+        state.instruments.map(i => `<option value="${i.symbol}">${i.displayName || i.symbol}</option>`).join('');
+
+      // Load draft
+      const draft = JSON.parse(localStorage.getItem('new-trade-draft') || '{}');
+      Object.keys(draft).forEach(k => {
+        if (form[k]) form[k].value = draft[k];
+      });
+
+      form.addEventListener('input', () => {
+        const data = Object.fromEntries(new FormData(form).entries());
+        localStorage.setItem('new-trade-draft', JSON.stringify(data));
+        updateSideInfo();
+      });
+
+      function updateSideInfo(){
+        const entry = Number(form.entry.value);
+        const stop = Number(form.stop.value);
+        const direction = form.direction.value;
+        const symbol = form.symbol.value;
+        const instrument = state.instruments.find(x => x.symbol === symbol);
+        const tp_pct = Number(s.tp_pct || 0.3);
+        const sl_pct = Number(s.sl_pct || 0.15);
+        const plan = computePlanClient({ balance: state.balance_current, tp_pct, sl_pct, entry, stop, direction, instrument });
+
+        container.querySelector('#si-risk').textContent = fmt(plan.risk_amount);
+        container.querySelector('#si-tp-amount').textContent = fmt(plan.planned_tp_amount);
+        container.querySelector('#si-sl-amount').textContent = fmt(plan.planned_sl_amount);
+        container.querySelector('#si-rr').textContent = fmt(plan.rr);
+        if (!form.qty.value && plan.qty) form.qty.value = plan.qty;
+        if (autoTP.checked && plan.take_profit && !form.take_profit.value) form.take_profit.value = plan.take_profit;
+      }
+      updateSideInfo();
+
+      form.addEventListener('submit', (ev) => {
+        ev.preventDefault();
+        console.log('New trade form submitted');
+
+        const status = ev.submitter && ev.submitter.dataset.status || 'Planned';
+        const data = Object.fromEntries(new FormData(form).entries());
+
+        if (!data.symbol) return toast('Please select a symbol');
+        if (!data.direction) return toast('Please select a direction');
+        if (data.entry && data.stop && Number(data.entry) === Number(data.stop)) return toast('Entry and stop prices cannot be the same');
+
+        const newTrade = {
+          id: Date.now(),
+          date: data.date,
+          time: data.time,
+          symbol: data.symbol,
+          direction: data.direction,
+          entry: numOrNull(data.entry),
+          stop: numOrNull(data.stop),
+          take_profit: numOrNull(data.take_profit),
+          qty: numOrNull(data.qty),
+          status,
+          commission: numOrNull(data.commission) || 0,
+          fees: numOrNull(data.fees) || 0,
+          auto_take_profit: autoTP.checked,
+          pnl: null,
+          rr: null,
+          notes: data.notes || ''
+        };
+
+        state.trades.push(newTrade);
+        saveToStorage();
+
+        toast('Trade saved successfully');
+        localStorage.removeItem('new-trade-draft');
+        window.location.hash = '#trades';
+      });
+    }
+
+    function renderTrades(){
+      console.log('Rendering trades list...');
+      const container = document.getElementById('view-trades');
+      if (!container) return;
+
+      const template = document.getElementById('tpl-trades');
+      if (!template) return;
+
+      container.innerHTML = template.innerHTML;
+      container.classList.remove('hidden');
+
+      const tbody = container.querySelector('#trades-body');
+      const symSel = container.querySelector('#flt-symbol');
+
+      if (!tbody || !symSel) return;
+
+      // Populate symbol filter
+      symSel.innerHTML = '<option value="">All Symbols</option>' +
+        state.instruments.map(i => `<option value="${i.symbol}">${i.displayName || i.symbol}</option>`).join('');
+
+      function load(){
+        console.log('Loading trades...');
+        const sym = symSel.value || '';
+        let filteredTrades = state.trades;
+
+        if (sym) {
+          filteredTrades = filteredTrades.filter(t => t.symbol === sym);
+        }
+
+        tbody.innerHTML = filteredTrades.map(t => trRow(t)).join('');
+        attachRowActions();
+      }
+
+      function trRow(t){
+        return `<tr>
+          <td>${t.id}</td><td>${t.date||''}</td><td>${t.time||''}</td><td>${t.symbol||''}</td><td>${t.direction||''}</td>
+          <td>${fmt(t.entry)}</td><td>${fmt(t.stop)}</td><td>${fmt(t.take_profit)}</td><td>${fmt(t.qty)}</td><td>${fmt(t.rr)}</td>
+          <td>${t.status||''}</td><td>${fmt(t.pnl)}</td>
+          <td>
+            <button class="mark" data-id="${t.id}" data-action="TP">TP</button>
+            <button class="mark" data-id="${t.id}" data-action="SL">SL</button>
+            <button class="mark" data-id="${t.id}" data-action="BE">BE</button>
+            <button class="mark-partial" data-id="${t.id}">Partial</button>
+            <button class="mark" data-id="${t.id}" data-action="Cancelled">Cancel</button>
+          </td>
+        </tr>`;
+      }
+
+      function attachRowActions(){
+        container.querySelectorAll('button.mark').forEach(btn => btn.addEventListener('click', () => {
+          const id = Number(btn.dataset.id);
+          const action = btn.dataset.action;
+          const trade = state.trades.find(t => t.id === id);
+          if (trade) {
+            trade.status = action;
+            saveToStorage();
+            toast('Trade updated successfully');
+            load();
+          }
+        }));
+
+        container.querySelectorAll('button.mark-partial').forEach(btn => btn.addEventListener('click', () => {
+          const id = Number(btn.dataset.id);
+          const percent = Number(prompt('Partial close percentage (0-100):', '50'));
+          if (!isFinite(percent)) return;
+          const trade = state.trades.find(t => t.id === id);
+          if (trade) {
+            trade.status = 'Partial';
+            trade.partial_percent = percent;
+            saveToStorage();
+            toast('Trade updated successfully');
+            load();
+          }
+        }));
+      }
+
+      container.querySelector('#apply-filter').addEventListener('click', load);
+      load();
+    }
+
+    function renderSettings(){
+      console.log('Rendering settings...');
+      const container = document.getElementById('view-settings');
+      if (!container) return;
+
+      const template = document.getElementById('tpl-settings');
+      if (!template) return;
+
+      container.innerHTML = template.innerHTML;
+      container.classList.remove('hidden');
+
+      const form = container.querySelector('#settings-form');
+      if (!form) return;
+
+      const b = state.settings || {};
+
+      // Fill form
+      form.starting_balance.value = b.starting_balance || 10000;
+      form.daily_target.value = b.daily_target || 515;
+      form.daily_max_loss.value = b.daily_max_loss || 1500;
+      form.tp_pct.value = (b.tp_pct != null ? b.tp_pct : 0.30);
+      form.sl_pct.value = (b.sl_pct != null ? b.sl_pct : 0.15);
+
+      const tbody = container.querySelector('#inst-body');
+      if (!tbody) return;
+
+      function drawInstruments(){
+        tbody.innerHTML = state.instruments.map(i => instRow(i)).join('');
+      }
+
+      function instRow(i){
+        return `<tr>
+          <td><input value="${i.symbol||''}" class="inst-symbol" placeholder="e.g. GOLD"></td>
+          <td><input type="number" step="0.0001" value="${i.tick_size||''}" class="inst-tick-size" placeholder="0.01"></td>
+          <td><input type="number" step="0.01" value="${i.tick_value||''}" class="inst-tick-value" placeholder="0.01"></td>
+          <td><input type="number" step="1" value="${i.contract_size||''}" class="inst-contract-size" placeholder="100"></td>
+          <td><button type="button" onclick="this.closest('tr').remove()">Remove</button></td>
+        </tr>`;
+      }
+
+      drawInstruments();
+
+      container.querySelector('#add-inst').addEventListener('click', () => {
+        state.instruments.push({ symbol: '', tick_size: '', tick_value: '', contract_size: 1 });
+        drawInstruments();
+      });
+
+      form.addEventListener('submit', (ev) => {
+        ev.preventDefault();
+        console.log('Settings form submitted');
+
+        const instruments = Array.from(tbody.querySelectorAll('tr')).map(tr => {
+          const symbolInput = tr.querySelector('.inst-symbol');
+          const tickSizeInput = tr.querySelector('.inst-tick-size');
+          const tickValueInput = tr.querySelector('.inst-tick-value');
+          const contractSizeInput = tr.querySelector('.inst-contract-size');
+
+          if (!symbolInput || !tickSizeInput || !tickValueInput || !contractSizeInput) return null;
+
+          return {
+            symbol: symbolInput.value.trim(),
+            tick_size: numOrNull(tickSizeInput.value),
+            tick_value: numOrNull(tickValueInput.value),
+            contract_size: numOrNull(contractSizeInput.value) || 1,
+          };
+        }).filter(i => i && i.symbol);
+
+        state.settings = {
+          starting_balance: numOrNull(form.starting_balance.value),
+          daily_target: numOrNull(form.daily_target.value),
+          daily_max_loss: numOrNull(form.daily_max_loss.value),
+          tp_pct: Number(form.tp_pct.value),
+          sl_pct: Number(form.sl_pct.value),
+        };
+
+        state.instruments = instruments;
+        state.balance_current = state.settings.starting_balance || 10000;
+
+        saveToStorage();
+        toast('Settings saved successfully');
+      });
+    }
+
+    function computePlanClient({ balance, tp_pct, sl_pct, entry, stop, direction, instrument }){
+      const risk_amount = round2(balance * sl_pct);
+      const planned_tp_amount = round2(balance * tp_pct);
+      const planned_sl_amount = round2(balance * sl_pct);
+      const rr = planned_sl_amount===0 ? 0 : round2(planned_tp_amount/planned_sl_amount);
+      let qty = '';
+      if (isFinite(entry) && isFinite(stop) && instrument && isFinite(instrument.tick_size) && isFinite(instrument.tick_value)){
+        const ticks = Math.abs(entry - stop)/instrument.tick_size;
+        const riskPer = ticks * instrument.tick_value;
+        if (riskPer > 0) qty = Math.max(1, Math.floor(risk_amount/riskPer));
+      }
+      let take_profit = '';
+      if (isFinite(entry) && isFinite(stop)){
+        const d = Math.abs(entry - stop);
+        take_profit = direction==='Long' ? roundTo(entry + d, instrument && instrument.tick_size) : roundTo(entry - d, instrument && instrument.tick_size);
+      }
+      return { risk_amount, planned_tp_amount, planned_sl_amount, rr, qty, take_profit };
+    }
+
+    function round2(n){ return Math.round(Number(n||0)*100)/100; }
+    function roundTo(n, step){ if(!step) return round2(n); const k = Math.round(n/step)*step; return round2(k); }
+    function numOrNull(v){ const n = Number(v); return isNaN(n) ? null : n; }
+
+    function toast(msg){
+      console.log('Message:', msg);
+      const el = document.getElementById('toast');
+      if (!el) {
+        alert(msg);
+        return;
+      }
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      setTimeout(() => {
+        if (el) el.classList.add('hidden');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
