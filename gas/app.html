@@ -54,6 +54,15 @@ const routes = {
 window.addEventListener('load', init);
 window.addEventListener('hashchange', navigate);
 
+// Add click handlers for navigation buttons
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('nav-link')) {
+    e.preventDefault();
+    const route = e.target.dataset.route;
+    window.location.hash = route;
+  }
+});
+
 async function init(){
   state.baseUrl = window.WEB_APP_URL || '';
   await refreshSettings();
@@ -64,7 +73,7 @@ function navigate(){
   const hash = window.location.hash || '#dashboard';
   document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
   document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
-  const activeLink = document.querySelector(`a[href="${hash}"]`);
+  const activeLink = document.querySelector(`[data-route="${hash}"]`);
   if (activeLink) activeLink.classList.add('active');
   const fn = routes[hash] || renderDashboard;
   fn();
