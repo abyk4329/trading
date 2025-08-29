@@ -207,21 +207,59 @@ function renderNewTrade(){
     updateSideInfo();
   });
 
+  // Auto-update when symbol changes
+  symbolSel.addEventListener('change', updateSideInfo);
+  form.entry.addEventListener('input', updateSideInfo);
+  form.stop.addEventListener('input', updateSideInfo);
+  form.qty.addEventListener('input', updateSideInfo);
+  autoTP.addEventListener('change', updateSideInfo);
+
   async function updateSideInfo(){
     const entry = Number(form.entry.value);
     const stop = Number(form.stop.value);
     const direction = form.direction.value;
     const symbol = form.symbol.value;
     const instrument = state.instruments.find(x=>x.symbol===symbol);
-    const tp_pct = Number(s.tp_pct || 0.3);
-    const sl_pct = Number(s.sl_pct || 0.15);
-    const plan = computePlanClient({ balance: state.balance_current, tp_pct, sl_pct, entry, stop, direction, instrument });
+    const tp_pct = Number(s.tp_pct || 0.02);
+    const sl_pct = Number(s.sl_pct || 0.01);
+    
+    // Update percentages display
+    container.querySelector('#si-tp').textContent = pct(tp_pct);
+    container.querySelector('#si-sl').textContent = pct(sl_pct);
+    
+    if (!instrument) {
+      // Clear all calculated fields
+      container.querySelector('#si-risk').textContent = '—';
+      container.querySelector('#si-tp-amount').textContent = '—';
+      container.querySelector('#si-sl-amount').textContent = '—';
+      container.querySelector('#si-rr').textContent = '—';
+      return;
+    }
+    
+    const plan = computePlanClient({ 
+      balance: state.balance_current, 
+      tp_pct, 
+      sl_pct, 
+      entry, 
+      stop, 
+      direction, 
+      instrument 
+    });
+    
     container.querySelector('#si-risk').textContent = fmt(plan.risk_amount);
     container.querySelector('#si-tp-amount').textContent = fmt(plan.planned_tp_amount);
     container.querySelector('#si-sl-amount').textContent = fmt(plan.planned_sl_amount);
     container.querySelector('#si-rr').textContent = fmt(plan.rr);
-    if (!form.qty.value && plan.qty) form.qty.value = plan.qty;
-    if (autoTP.checked && plan.take_profit && !form.take_profit.value) form.take_profit.value = plan.take_profit;
+    
+    // Auto-fill quantity if not manually set
+    if (!form.qty.value && plan.qty && isFinite(entry) && isFinite(stop)) {
+      form.qty.value = plan.qty;
+    }
+    
+    // Auto-calculate TP if checkbox is checked and we have valid entry/stop
+    if (autoTP.checked && plan.take_profit && isFinite(entry) && isFinite(stop) && !form.take_profit.value) {
+      form.take_profit.value = plan.take_profit;
+    }
   }
   updateSideInfo();
 
@@ -255,6 +293,8 @@ function renderNewTrade(){
       if (res.ok) {
         toast('Trade saved successfully');
         localStorage.removeItem('new-trade-draft');
+        // Refresh settings to update balance
+        await refreshSettings();
         window.location.hash = '#trades';
       } else throw new Error(res.error||'');
     } catch (e) { toast('Failed to save trade'); }
@@ -296,14 +336,22 @@ function renderTrades(){
     container.querySelectorAll('button.mark').forEach(btn => btn.addEventListener('click', async () => {
       const id = btn.dataset.id; const action = btn.dataset.action;
       const res = await apiPost(`/api/trades/${id}/mark`, { action });
-      if (res.ok) { toast('Updated successfully'); load(); } else toast('Update failed');
+      if (res.ok) { 
+        toast('Updated successfully'); 
+        await refreshSettings(); // Refresh balance
+        load(); 
+      } else toast('Update failed');
     }));
     container.querySelectorAll('button.mark-partial').forEach(btn => btn.addEventListener('click', async () => {
       const id = btn.dataset.id;
       const percent = Number(prompt('Partial close percentage (0-100):', '50'));
       if (!isFinite(percent)) return;
       const res = await apiPost(`/api/trades/${id}/mark`, { action: 'Partial', percent });
-      if (res.ok) { toast('Updated successfully'); load(); } else toast('Update failed');
+      if (res.ok) { 
+        toast('Updated successfully'); 
+        await refreshSettings(); // Refresh balance
+        load(); 
+      } else toast('Update failed');
     }));
   }
 
@@ -329,10 +377,10 @@ function renderSettings(){
   const form = container.querySelector('#settings-form');
   const b = state.settings || {};
   form.starting_balance.value = b.starting_balance || 10000;
-  form.daily_target.value = b.daily_target || 515;
-  form.daily_max_loss.value = b.daily_max_loss || 1500;
-  form.tp_pct.value = (b.tp_pct != null ? b.tp_pct : 0.30);
-  form.sl_pct.value = (b.sl_pct != null ? b.sl_pct : 0.15);
+  form.daily_target.value = b.daily_target || 100;
+  form.daily_max_loss.value = b.daily_max_loss || 50;
+  form.tp_pct.value = ((b.tp_pct != null ? b.tp_pct : 0.02) * 100); // Convert to percentage
+  form.sl_pct.value = ((b.sl_pct != null ? b.sl_pct : 0.01) * 100); // Convert to percentage
 
   const tbody = container.querySelector('#inst-body');
   function drawInstruments(){
@@ -366,13 +414,15 @@ function renderSettings(){
       starting_balance: numOrNull(form.starting_balance.value),
       daily_target: numOrNull(form.daily_target.value),
       daily_max_loss: numOrNull(form.daily_max_loss.value),
-      tp_pct: Number(form.tp_pct.value),
-      sl_pct: Number(form.sl_pct.value),
+      tp_pct: Number(form.tp_pct.value) / 100, // Convert percentage to decimal
+      sl_pct: Number(form.sl_pct.value) / 100, // Convert percentage to decimal
       instruments
     };
     const res = await apiPost('/api/settings', payload);
-    if (res.ok) { toast('Settings saved successfully'); refreshSettings(); }
-    else toast('Failed to save settings');
+    if (res.ok) { 
+      toast('Settings saved successfully'); 
+      await refreshSettings(); 
+    } else toast('Failed to save settings');
   });
 }
 
