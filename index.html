@@ -4,10 +4,37 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>יומן מסחר</title>
+
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#9E7E67" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="יומן מסחר" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="msapplication-TileColor" content="#9E7E67" />
+  <meta name="msapplication-config" content="/browserconfig.xml" />
+
+  <!-- PWA Links -->
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='64' fill='%239E7E67'/><text x='256' y='280' font-family='Arial, sans-serif' font-size='200' font-weight='bold' text-anchor='middle' fill='%23EAEAE7'>📊</text></svg>" />
+
   <link rel="stylesheet" href="styles.css" />
   <script>
     // If served via Apps Script, Code.gs can inject window.WEB_APP_URL; otherwise leave empty
     window.WEB_APP_URL = window.WEB_APP_URL || '';
+
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(registration => {
+            console.log('SW registered: ', registration);
+          })
+          .catch(registrationError => {
+            console.log('SW registration failed: ', registrationError);
+          });
+      });
+    }
   </script>
 </head>
 <body>
