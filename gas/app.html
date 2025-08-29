@@ -178,10 +178,15 @@ async function refreshSettings(){
 
       // If no instruments are configured, use predefined ones
       if (!state.instruments || state.instruments.length === 0) {
+        console.log('No instruments configured, using predefined ones');
         state.instruments = Object.values(PREDEFINED_INSTRUMENTS);
       }
 
-      console.log('Settings loaded:', state.settings);
+      console.log('Settings loaded successfully:', {
+        settings: state.settings,
+        instrumentsCount: state.instruments.length,
+        balance: state.balance_current
+      });
     } else {
       throw new Error(res?.error || 'Failed to load settings');
     }
@@ -191,10 +196,10 @@ async function refreshSettings(){
     // Use default settings and predefined instruments
     state.settings = {
       starting_balance: 10000,
-      daily_target: 100,
-      daily_max_loss: 50,
-      tp_pct: 0.02,
-      sl_pct: 0.01
+      daily_target: 515,
+      daily_max_loss: 1500,
+      tp_pct: 0.30,
+      sl_pct: 0.15
     };
     state.instruments = Object.values(PREDEFINED_INSTRUMENTS);
     state.balance_current = 10000;
@@ -289,13 +294,31 @@ function renderDashboard(){
 }
 
 function renderNewTrade(){
+  console.log('Rendering new trade form...');
   const container = document.getElementById('view-new');
-  container.innerHTML = document.getElementById('tpl-new').innerHTML;
+  if (!container) {
+    console.error('New trade container not found!');
+    return;
+  }
+
+  const template = document.getElementById('tpl-new');
+  if (!template) {
+    console.error('New trade template not found!');
+    return;
+  }
+
+  container.innerHTML = template.innerHTML;
   container.classList.remove('hidden');
+  console.log('New trade template rendered');
 
   const form = container.querySelector('#new-trade-form');
   const symbolSel = container.querySelector('#symbol-select');
   const autoTP = container.querySelector('#auto-tp');
+
+  if (!form || !symbolSel) {
+    console.error('Form or symbol select not found!');
+    return;
+  }
 
   const s = state.settings || {};
   container.querySelector('#si-balance').textContent = fmt(state.balance_current);
@@ -306,9 +329,18 @@ function renderNewTrade(){
   form.date.value = now.toISOString().slice(0,10);
   form.time.value = now.toTimeString().slice(0,5);
 
-  const inst = state.instruments || [];
+  // Ensure we have instruments loaded
+  let instruments = state.instruments || [];
+  if (!instruments || instruments.length === 0) {
+    console.log('No instruments found, using predefined ones');
+    instruments = Object.values(PREDEFINED_INSTRUMENTS);
+    state.instruments = instruments;
+  }
+
+  console.log('Loading instruments for symbol select:', instruments);
+
   symbolSel.innerHTML = '<option value="">Select Symbol</option>' +
-    inst.map(i => `<option value="${i.symbol}">${i.displayName || i.symbol}</option>`).join('');
+    instruments.map(i => `<option value="${i.symbol}">${i.displayName || i.symbol}</option>`).join('');
 
   const draft = JSON.parse(localStorage.getItem('new-trade-draft')||'{}');
   Object.keys(draft).forEach(k => {
@@ -326,7 +358,7 @@ function renderNewTrade(){
     const stop = Number(form.stop.value);
     const direction = form.direction.value;
     const symbol = form.symbol.value;
-    const instrument = state.instruments.find(x=>x.symbol===symbol);
+    const instrument = instruments.find(x=>x.symbol===symbol);
     const tp_pct = Number(s.tp_pct || 0.3);
     const sl_pct = Number(s.sl_pct || 0.15);
     const plan = computePlanClient({ balance: state.balance_current, tp_pct, sl_pct, entry, stop, direction, instrument });
@@ -341,8 +373,12 @@ function renderNewTrade(){
 
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
+    console.log('New trade form submitted');
+
     const status = ev.submitter && ev.submitter.dataset.status || 'Planned';
     const data = Object.fromEntries(new FormData(form).entries());
+
+    console.log('Form data:', data);
 
     if (!data.symbol) return toast('Please select a symbol');
     if (!data.direction) return toast('Please select direction');
@@ -360,33 +396,73 @@ function renderNewTrade(){
       status,
       commission: numOrNull(data.commission) || 0,
       fees: numOrNull(data.fees) || 0,
-      auto_take_profit: document.getElementById('auto-tp').checked
+      auto_take_profit: autoTP.checked
     };
+
+    console.log('Sending trade payload:', payload);
 
     try {
       const res = await apiPost('/api/trades', payload);
+      console.log('Trade save response:', res);
+
       if (res.ok) {
         toast('Trade saved successfully');
         localStorage.removeItem('new-trade-draft');
         window.location.hash = '#trades';
-      } else throw new Error(res.error||'');
-    } catch (e) { toast('Failed to save trade'); }
+      } else {
+        throw new Error(res.error||'Unknown error');
+      }
+    } catch (e) {
+      console.error('Trade save error:', e);
+      toast('Failed to save trade: ' + e.message);
+    }
   });
+
+  console.log('New trade form rendering complete');
 }
 
 function renderTrades(){
+  console.log('Rendering trades...');
   const container = document.getElementById('view-trades');
-  container.innerHTML = document.getElementById('tpl-trades').innerHTML;
+  if (!container) {
+    console.error('Trades container not found!');
+    return;
+  }
+
+  const template = document.getElementById('tpl-trades');
+  if (!template) {
+    console.error('Trades template not found!');
+    return;
+  }
+
+  container.innerHTML = template.innerHTML;
   container.classList.remove('hidden');
+  console.log('Trades template rendered');
 
   const tbody = container.querySelector('#trades-body');
   const symSel = container.querySelector('#flt-symbol');
-  symSel.innerHTML = '<option value="">All Symbols</option>' + (state.instruments||[]).map(i=>`<option value="${i.symbol}">${i.displayName || i.symbol}</option>`).join('');
+
+  if (!tbody || !symSel) {
+    console.error('Trades table or symbol select not found!');
+    return;
+  }
+
+  // Populate symbol filter with available instruments
+  let instruments = state.instruments || [];
+  if (!instruments || instruments.length === 0) {
+    instruments = Object.values(PREDEFINED_INSTRUMENTS);
+  }
+
+  symSel.innerHTML = '<option value="">All Symbols</option>' +
+    instruments.map(i => `<option value="${i.symbol}">${i.displayName || i.symbol}</option>`).join('');
+
   async function load(){
+    console.log('Loading trades...');
     const sym = symSel.value || '';
     const q = sym ? ('?symbol='+encodeURIComponent(sym)) : '';
     const res = await apiGet('/api/trades'+q);
     const trades = res.trades || [];
+    console.log('Loaded trades:', trades.length);
     tbody.innerHTML = trades.map(t => trRow(t)).join('');
     attachRowActions();
   }
@@ -435,57 +511,116 @@ function renderTrades(){
 }
 
 function renderSettings(){
+  console.log('Rendering settings...');
   const container = document.getElementById('view-settings');
-  container.innerHTML = document.getElementById('tpl-settings').innerHTML;
+  if (!container) {
+    console.error('Settings container not found!');
+    return;
+  }
+
+  const template = document.getElementById('tpl-settings');
+  if (!template) {
+    console.error('Settings template not found!');
+    return;
+  }
+
+  container.innerHTML = template.innerHTML;
   container.classList.remove('hidden');
+  console.log('Settings template rendered');
+
   const form = container.querySelector('#settings-form');
+  if (!form) {
+    console.error('Settings form not found!');
+    return;
+  }
+
   const b = state.settings || {};
+  console.log('Loading settings:', b);
+
+  // Fill form fields
   form.starting_balance.value = b.starting_balance || 10000;
   form.daily_target.value = b.daily_target || 515;
   form.daily_max_loss.value = b.daily_max_loss || 1500;
   form.tp_pct.value = (b.tp_pct != null ? b.tp_pct : 0.30);
   form.sl_pct.value = (b.sl_pct != null ? b.sl_pct : 0.15);
 
+  console.log('Form fields filled');
+
   const tbody = container.querySelector('#inst-body');
-  function drawInstruments(){
-    tbody.innerHTML = (state.instruments||[]).map(i => instRow(i)).join('');
+  if (!tbody) {
+    console.error('Instruments table body not found!');
+    return;
   }
+
+  function drawInstruments(){
+    const instruments = state.instruments || [];
+    console.log('Drawing instruments:', instruments);
+    tbody.innerHTML = instruments.map(i => instRow(i)).join('');
+  }
+
   function instRow(i){
     return `<tr>
-      <td><input value="${i.symbol||''}" class="inst-symbol"></td>
-      <td><input type="number" step="0.0001" value="${i.tick_size||''}" class="inst-tick-size"></td>
-      <td><input type="number" step="0.01" value="${i.tick_value||''}" class="inst-tick-value"></td>
-      <td><input type="number" step="1" value="${i.contract_size||''}" class="inst-contract-size"></td>
-      <td></td>
+      <td><input value="${i.symbol||''}" class="inst-symbol" placeholder="e.g. GOLD"></td>
+      <td><input type="number" step="0.0001" value="${i.tick_size||''}" class="inst-tick-size" placeholder="0.01"></td>
+      <td><input type="number" step="0.01" value="${i.tick_value||''}" class="inst-tick-value" placeholder="0.01"></td>
+      <td><input type="number" step="1" value="${i.contract_size||''}" class="inst-contract-size" placeholder="100"></td>
+      <td><button type="button" onclick="this.closest('tr').remove()">Remove</button></td>
     </tr>`;
   }
+
   drawInstruments();
 
-  container.querySelector('#add-inst').addEventListener('click', () => {
-    state.instruments.push({ symbol: '', tick_size: '', tick_value: '', contract_size: 1 });
-    drawInstruments();
-  });
+  const addBtn = container.querySelector('#add-inst');
+  if (addBtn) {
+    addBtn.addEventListener('click', () => {
+      console.log('Adding new instrument');
+      if (!state.instruments) state.instruments = [];
+      state.instruments.push({ symbol: '', tick_size: '', tick_value: '', contract_size: 1 });
+      drawInstruments();
+    });
+  }
 
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
-    const instruments = Array.from(tbody.querySelectorAll('tr')).map(tr => ({
-      symbol: tr.querySelector('.inst-symbol').value.trim(),
-      tick_size: numOrNull(tr.querySelector('.inst-tick-size').value),
-      tick_value: numOrNull(tr.querySelector('.inst-tick-value').value),
-      contract_size: numOrNull(tr.querySelector('.inst-contract-size').value) || 1,
-    })).filter(i=>i.symbol);
-    const payload = {
-      starting_balance: numOrNull(form.starting_balance.value),
-      daily_target: numOrNull(form.daily_target.value),
-      daily_max_loss: numOrNull(form.daily_max_loss.value),
-      tp_pct: Number(form.tp_pct.value),
-      sl_pct: Number(form.sl_pct.value),
-      instruments
-    };
-    const res = await apiPost('/api/settings', payload);
-    if (res.ok) { toast('Settings saved successfully'); refreshSettings(); }
-    else toast('Failed to save settings');
+    console.log('Settings form submitted');
+
+    try {
+      const instruments = Array.from(tbody.querySelectorAll('tr')).map(tr => ({
+        symbol: tr.querySelector('.inst-symbol').value.trim(),
+        tick_size: numOrNull(tr.querySelector('.inst-tick-size').value),
+        tick_value: numOrNull(tr.querySelector('.inst-tick-value').value),
+        contract_size: numOrNull(tr.querySelector('.inst-contract-size').value) || 1,
+      })).filter(i => i.symbol);
+
+      console.log('Collected instruments:', instruments);
+
+      const payload = {
+        starting_balance: numOrNull(form.starting_balance.value),
+        daily_target: numOrNull(form.daily_target.value),
+        daily_max_loss: numOrNull(form.daily_max_loss.value),
+        tp_pct: Number(form.tp_pct.value),
+        sl_pct: Number(form.sl_pct.value),
+        instruments
+      };
+
+      console.log('Sending payload:', payload);
+
+      const res = await apiPost('/api/settings', payload);
+      console.log('API response:', res);
+
+      if (res.ok) {
+        toast('Settings saved successfully');
+        await refreshSettings();
+      } else {
+        toast('Failed to save settings: ' + (res.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Settings save error:', error);
+      toast('Error saving settings: ' + error.message);
+    }
   });
+
+  console.log('Settings rendering complete');
 }
 
 async function apiGet(path){
